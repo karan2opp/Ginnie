@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { connections } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
+import { corsair } from "../../../corsair";
+import { pool } from "@/db";
 
 export default async function ConnectPage() {
   const { userId } = await auth();
@@ -12,7 +14,46 @@ export default async function ConnectPage() {
     where: eq(connections.userId, userId!),
   });
 
-  if (connection?.isActive) redirect("/chat");
+  if (connection?.isActive) {
+    try {
+      const gmailRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'gmail'`);
+      if (gmailRes.rows[0]) {
+         const existingAccount = await pool.query(`SELECT id FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, gmailRes.rows[0].id]);
+         if (existingAccount.rowCount === 0) {
+            await pool.query(`INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, '{}', NOW(), NOW())`, [userId, gmailRes.rows[0].id]);
+         }
+         const gmailKeys = corsair.withTenant(userId!).gmail.keys;
+         await gmailKeys.issue_new_dek();
+         await gmailKeys.set_access_token(connection.accessToken!);
+         if (connection.refreshToken) {
+           await gmailKeys.set_refresh_token(connection.refreshToken);
+         }
+         if (connection.accessTokenExpiry) {
+           await gmailKeys.set_expires_at(String(Math.floor(connection.accessTokenExpiry.getTime() / 1000)));
+         }
+      }
+
+      const calRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'googlecalendar'`);
+      if (calRes.rows[0]) {
+         const existingAccount = await pool.query(`SELECT id FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, calRes.rows[0].id]);
+         if (existingAccount.rowCount === 0) {
+            await pool.query(`INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, '{}', NOW(), NOW())`, [userId, calRes.rows[0].id]);
+         }
+         const calendarKeys = corsair.withTenant(userId!).googlecalendar.keys;
+         await calendarKeys.issue_new_dek();
+         await calendarKeys.set_access_token(connection.accessToken!);
+         if (connection.refreshToken) {
+           await calendarKeys.set_refresh_token(connection.refreshToken);
+         }
+         if (connection.accessTokenExpiry) {
+           await calendarKeys.set_expires_at(String(Math.floor(connection.accessTokenExpiry.getTime() / 1000)));
+         }
+      }
+    } catch (e) {
+      console.error("Failed to self-heal corsair tokens:", e);
+    }
+    redirect("/chat");
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">

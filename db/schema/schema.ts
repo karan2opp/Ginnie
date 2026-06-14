@@ -45,3 +45,4 @@ export * from "./user";
 export * from "./calendar";
 export * from "./connection";
 export * from "./corsair";
+export * from "./chat";

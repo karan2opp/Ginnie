@@ -1,10 +1,11 @@
 import { getOAuthClient, exchangeCodeForTokens } from "@/lib/google";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/db";
+import { db, pool } from "@/db";
 import { connections, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { google } from "googleapis";
+import { corsair } from "../../../../corsair";
 
 export async function GET(req: Request) {
   const { userId } = await auth();
@@ -78,7 +79,42 @@ export async function GET(req: Request) {
         isActive:           true,
       });
     }
-    
+
+    // Sync tokens with Corsair for integrations manually
+    const gmailRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'gmail'`);
+    if (gmailRes.rows[0]) {
+       const existingAccount = await pool.query(`SELECT id FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, gmailRes.rows[0].id]);
+       if (existingAccount.rowCount === 0) {
+          await pool.query(`INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, '{}', NOW(), NOW())`, [userId, gmailRes.rows[0].id]);
+       }
+       const gmailKeys = corsair.withTenant(userId).gmail.keys;
+       await gmailKeys.issue_new_dek();
+       await gmailKeys.set_access_token(tokens.access_token!);
+       if (tokens.refresh_token) {
+           await gmailKeys.set_refresh_token(tokens.refresh_token);
+       }
+       if (tokens.expiry_date) {
+         await gmailKeys.set_expires_at(String(Math.floor(tokens.expiry_date / 1000)));
+       }
+    }
+
+    const calRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'googlecalendar'`);
+    if (calRes.rows[0]) {
+       const existingAccount = await pool.query(`SELECT id FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, calRes.rows[0].id]);
+       if (existingAccount.rowCount === 0) {
+          await pool.query(`INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, '{}', NOW(), NOW())`, [userId, calRes.rows[0].id]);
+       }
+       const calendarKeys = corsair.withTenant(userId).googlecalendar.keys;
+       await calendarKeys.issue_new_dek();
+       await calendarKeys.set_access_token(tokens.access_token!);
+       if (tokens.refresh_token) {
+           await calendarKeys.set_refresh_token(tokens.refresh_token);
+       }
+       if (tokens.expiry_date) {
+         await calendarKeys.set_expires_at(String(Math.floor(tokens.expiry_date / 1000)));
+       }
+    }
+
     success = true;
   } catch (error: any) {
     console.error("Google OAuth error:", error);

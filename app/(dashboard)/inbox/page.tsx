@@ -1,40 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
-import { getGoogleClient } from "@/modules/auth/auth.service";
-import { google } from "googleapis";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
-
-function decodeBase64(data: string) {
-  return Buffer.from(data.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf-8');
-}
-
-function extractBody(payload: any): string {
-  if (!payload) return "";
-  
-  if (payload.parts) {
-    let htmlPart = payload.parts.find((p: any) => p.mimeType === "text/html");
-    if (htmlPart?.body?.data) return decodeBase64(htmlPart.body.data);
-    
-    for (const part of payload.parts) {
-      if (part.parts) {
-         const extracted = extractBody(part);
-         if (extracted) return extracted;
-      }
-    }
-    
-    let textPart = payload.parts.find((p: any) => p.mimeType === "text/plain");
-    if (textPart?.body?.data) {
-      return `<div style="white-space: pre-wrap; font-family: sans-serif; padding: 1rem;">${decodeBase64(textPart.body.data)}</div>`;
-    }
-  } else if (payload.body?.data) {
-    const decoded = decodeBase64(payload.body.data);
-    return payload.mimeType === "text/html" 
-      ? decoded 
-      : `<div style="white-space: pre-wrap; font-family: sans-serif; padding: 1rem;">${decoded}</div>`;
-  }
-  return "<div style='padding: 1rem; color: #666;'>No content available to display.</div>";
-}
+import { fetchInboxData } from "./inbox.service";
 
 export default async function InboxPage({ searchParams }: any) {
   const { userId } = await auth();
@@ -50,69 +18,10 @@ export default async function InboxPage({ searchParams }: any) {
   let selectedEmail: any = null;
 
   try {
-    const googleClient = await getGoogleClient(userId);
-    
-    if (googleClient) {
-      isConnected = true;
-      const gmail = google.gmail({ version: "v1", auth: googleClient });
-      
-      // Fetch messages list
-      const response = await gmail.users.messages.list({ 
-        userId: "me",
-        maxResults: 15,
-        labelIds: [folder]
-      });
-
-      if (response.data.messages) {
-        const messageDetails = await Promise.all(
-          response.data.messages.map(async (msg) => {
-            const detail = await gmail.users.messages.get({
-              userId: "me",
-              id: msg.id!,
-              format: "metadata",
-              metadataHeaders: ["Subject", "From", "Date"]
-            });
-            
-            const headers = detail.data.payload?.headers;
-            const subject = headers?.find(h => h.name === "Subject")?.value || "No Subject";
-            const from = headers?.find(h => h.name === "From")?.value || "Unknown Sender";
-            const date = headers?.find(h => h.name === "Date")?.value || "";
-            
-            return {
-              id: msg.id!,
-              snippet: detail.data.snippet,
-              subject,
-              from: from.split('<')[0].trim(),
-              date: new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-            };
-          })
-        );
-        emails = messageDetails;
-      }
-
-      // Fetch specific message if selected
-      if (messageId) {
-        const detail = await gmail.users.messages.get({
-          userId: "me",
-          id: messageId,
-          format: "full"
-        });
-        
-        const headers = detail.data.payload?.headers;
-        const subject = headers?.find(h => h.name === "Subject")?.value || "No Subject";
-        const from = headers?.find(h => h.name === "From")?.value || "Unknown Sender";
-        const date = headers?.find(h => h.name === "Date")?.value || "";
-        const bodyHtml = extractBody(detail.data.payload);
-
-        selectedEmail = {
-          id: messageId,
-          subject,
-          from,
-          date: new Date(date).toLocaleString(undefined, { dateStyle: 'full', timeStyle: 'short' }),
-          bodyHtml
-        };
-      }
-    }
+    const data = await fetchInboxData(userId, folder, messageId);
+    isConnected = data.isConnected;
+    emails = data.emails;
+    selectedEmail = data.selectedEmail;
   } catch (error: any) {
     console.error("Failed to fetch emails:", error);
     errorMsg = error.message || "Unknown error";

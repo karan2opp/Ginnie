@@ -1,11 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
-import { getGoogleClient } from "@/modules/auth/auth.service";
-import { google } from "googleapis";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
 import { ViewSelector } from "@/components/ViewSelector";
-import { getMonthGrid, getWeekGrid, getDateStr, parseGoogleEvents } from "@/lib/calendar-utils";
+import { getMonthGrid, getWeekGrid, getDateStr } from "@/lib/calendar-utils";
+import { fetchCalendarEvents } from "./calendar.service";
 
 export default async function CalendarPage({ searchParams }: any) {
   const { userId } = await auth();
@@ -68,32 +67,19 @@ export default async function CalendarPage({ searchParams }: any) {
   }
 
   try {
-    const googleClient = await getGoogleClient(userId);
-    if (googleClient) {
-      isConnected = true;
-      const calendar = google.calendar({ version: "v3", auth: googleClient });
-      
-      let queryTimeMin = timeMinStr;
-      let queryTimeMax = timeMaxStr;
+    let queryTimeMin = timeMinStr;
+    let queryTimeMax = timeMaxStr;
 
-      if (view === "year") {
-         let startOfYear = new Date(targetDate.getFullYear(), 0, 1);
-         let endOfYear = new Date(targetDate.getFullYear() + 1, 0, 1);
-         queryTimeMin = startOfYear.toISOString();
-         queryTimeMax = endOfYear.toISOString();
-      }
-
-      const response = await calendar.events.list({
-        calendarId: "primary",
-        timeMin: queryTimeMin,
-        timeMax: queryTimeMax,
-        maxResults: 2500,
-        singleEvents: true,
-        orderBy: "startTime",
-      });
-
-      eventsByDate = parseGoogleEvents(response.data.items || []);
+    if (view === "year") {
+       let startOfYear = new Date(targetDate.getFullYear(), 0, 1);
+       let endOfYear = new Date(targetDate.getFullYear() + 1, 0, 1);
+       queryTimeMin = startOfYear.toISOString();
+       queryTimeMax = endOfYear.toISOString();
     }
+
+    const data = await fetchCalendarEvents(userId, queryTimeMin, queryTimeMax);
+    isConnected = data.isConnected;
+    eventsByDate = data.eventsByDate;
   } catch (error: any) {
     console.error("Failed to fetch calendar:", error);
     errorMsg = error.message || "Unknown error";
