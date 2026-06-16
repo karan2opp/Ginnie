@@ -53,7 +53,7 @@ const createMeeting = tool({
             // Step 1.5 — update with meet link
             const finalRes = await calApi.events.update({
                 calendarId: "primary",
-                id: res.id,
+                id: res.id!,
                 conferenceDataVersion: 1,
                 sendUpdates: "all",
                 event: {
