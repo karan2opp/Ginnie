@@ -61,13 +61,13 @@ const createMeeting = tool({
                     start: { dateTime: startLocal, timeZone: "Asia/Kolkata" },
                     end: { dateTime: endLocal, timeZone: "Asia/Kolkata" },
                     attendees: [
-                        { email: organizerEmail, organizer: true, responseStatus: "accepted" },
-                        ...attendees.map(email => ({ email, responseStatus: "needsAction" })),
+                        { email: organizerEmail, organizer: true, responseStatus: "accepted" as const },
+                        ...attendees.map(email => ({ email, responseStatus: "needsAction" as const })),
                     ],
                     conferenceData: {
                         createRequest: { requestId: crypto.randomUUID() },
                     },
-                },
+                } as any,
             });
             const iCalUID = finalRes.iCalUID || crypto.randomUUID();
             const meetLink = finalRes.hangoutLink || finalRes.htmlLink || "";
