@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     console.info('Plugin Processed:', result.plugin, result.action);
 
     if (result.plugin === 'gmail' && result.action === 'new_message') {
-        const payload = result.payload as any;
+        const payload = (result as any).payload;
         const msg = payload?.message || payload;
         
         if (msg && msg.id) {
