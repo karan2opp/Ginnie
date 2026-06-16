@@ -6,9 +6,10 @@ import { useState } from "react";
 interface SidebarProps {
   currentPath: string; // e.g. "/inbox?folder=INBOX" or "/calendar"
   navLinks: Array<{ name: string; href: string; icon: string; isActive?: boolean }>;
+  children?: React.ReactNode;
 }
 
-export function Sidebar({ currentPath, navLinks }: SidebarProps) {
+export function Sidebar({ currentPath, navLinks, children }: SidebarProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -51,6 +52,11 @@ export function Sidebar({ currentPath, navLinks }: SidebarProps) {
           );
         })}
       </nav>
+      {isOpen && children && (
+        <div className="mt-4 flex-1 overflow-hidden flex flex-col">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

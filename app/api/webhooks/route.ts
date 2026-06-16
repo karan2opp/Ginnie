@@ -26,6 +26,37 @@ export async function POST(request: NextRequest) {
 
     console.info('Plugin Processed:', result.plugin, result.action);
 
+    if (result.plugin === 'gmail' && result.action === 'new_message') {
+        const payload = result.payload as any;
+        const msg = payload?.message || payload;
+        
+        if (msg && msg.id) {
+            const { scoreEmailPriority } = await import('@/lib/llm');
+            const { db } = await import('@/db');
+            const { emails } = await import('@/db/schema/emails');
+
+            const subject = msg.subject || "No Subject";
+            const snippet = msg.snippet || "";
+            const from = msg.from || "Unknown";
+            
+            const priority = await scoreEmailPriority(subject, snippet, from);
+            
+            try {
+                await db.insert(emails).values({
+                    id: msg.id,
+                    userId: tenantId,
+                    subject,
+                    snippet,
+                    from,
+                    priority,
+                    date: new Date()
+                }).onConflictDoNothing();
+            } catch (err) {
+                console.error("Failed to insert email from webhook", err);
+            }
+        }
+    }
+
     // Build response headers (e.g. Asana X-Hook-Secret handshake)
     // any/unknown cast needed since responseHeaders is a newer field not yet in the installed type definitions
     const responseHeaders = result.responseHeaders

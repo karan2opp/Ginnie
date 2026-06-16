@@ -16,8 +16,3 @@ export const corsair = createCorsair({
 // corsair.withTenant('user_123').gmail
 // Use top-level await to get the actual data from the Promise
 // Wrap in async function since top-level await needs ESM
-async function run() {
-    const response = await corsair.withTenant('dev').gmail.api.messages.list({});
-    console.log("Success! Gmail API returned:", response);
-}
-run();

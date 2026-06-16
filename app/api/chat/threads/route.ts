@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server';
 import { db } from '../../../../db';
 import { sql } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     const { userId } = await auth();
     if (!userId) {

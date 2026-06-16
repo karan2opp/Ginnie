@@ -2,14 +2,19 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Sidebar } from "@/components/Sidebar";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Message {
   role: "user" | "agent";
   content: string;
 }
 
-export function ChatClient() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+interface ChatClientProps {
+  userName?: string;
+}
+
+export function ChatClient({ userName = "" }: ChatClientProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +31,7 @@ export function ChatClient() {
 
   async function fetchThreads() {
     try {
-      const res = await fetch("/api/chat/threads");
+      const res = await fetch("/api/chat/threads", { cache: "no-store" });
       const data = await res.json();
       if (data.threads) setThreads(data.threads);
     } catch (e) {
@@ -40,7 +45,7 @@ export function ChatClient() {
       setMessages([]);
       return;
     }
-    fetch(`/api/chat?threadId=${currentThreadId}`)
+    fetch(`/api/chat?threadId=${currentThreadId}`, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
         if (data.messages) {
@@ -89,7 +94,7 @@ export function ChatClient() {
       Write: "Write an email to ",
       Summarize: "Summarize my latest emails",
       Analyze: "Analyze my inbox and tell me what needs attention",
-      Create: "Create a calendar event for ",
+      "Create a meeting": "Create a calendar event for ",
     };
     setInput(prompts[label] || "");
   }
@@ -101,86 +106,77 @@ export function ChatClient() {
   ];
 
   const actionPills = [
-    { icon: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z", label: "Write" },
-    { icon: "M4 6h16M4 12h8m-8 6h16", label: "Summarize" },
-    { icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", label: "Analyze" },
-    { icon: "M12 4v16m8-8H4", label: "Create" },
-    { icon: "M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z", label: "More" }
+    { icon: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z", label: "Write", shortcut: "Alt W" },
+    { icon: "M4 6h16M4 12h8m-8 6h16", label: "Summarize", shortcut: "Alt U" },
+    { icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", label: "Analyze", shortcut: "Alt A" },
+    { icon: "M12 4v16m8-8H4", label: "Create a meeting", shortcut: "Alt M" }
   ];
 
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.altKey && !e.shiftKey) {
+        switch (e.key.toLowerCase()) {
+          case 'w':
+            e.preventDefault();
+            handlePill("Write");
+            break;
+          case 'u':
+            e.preventDefault();
+            handlePill("Summarize");
+            break;
+          case 'a':
+            e.preventDefault();
+            handlePill("Analyze");
+            break;
+          case 'm':
+            e.preventDefault();
+            handlePill("Create a meeting");
+            break;
+        }
+      }
+    }
 
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 flex">
-      <Sidebar currentPath="/chat" navLinks={navLinks} />
-
-      <div className="flex-1 flex h-screen bg-[#0a0a0a] overflow-hidden relative">
-
-        {/* Toggle Button */}
-        {!isSidebarOpen && (
+      <Sidebar currentPath="/chat" navLinks={navLinks}>
+        <div className="flex-1 overflow-y-auto space-y-1 min-w-[200px] mt-4 pt-4 border-t border-neutral-800/40">
           <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="absolute top-4 left-4 z-10 p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
+            onClick={() => {
+              setCurrentThreadId(null);
+              setMessages([]);
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold bg-white text-black hover:bg-neutral-200 rounded-full transition-colors mb-4 shadow-sm"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+            <svg className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
+            New chat
           </button>
-        )}
 
-        {/* Inner Sidebar */}
-        <div className={`transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-64' : 'w-0 opacity-0'} bg-neutral-950/50 border-r border-neutral-800/40 flex flex-col shrink-0 overflow-hidden`}>
-          <div className="p-4 flex items-center justify-between border-b border-neutral-800/40 min-w-max">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="font-semibold text-neutral-200">Ginnie</span>
-            </div>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-3 space-y-1 min-w-[256px]">
-            <button
-              onClick={() => {
-                setCurrentThreadId(null);
-                setMessages([]);
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-neutral-300 hover:bg-neutral-800/50 rounded-xl transition-colors mb-4 group"
-            >
-              <svg className="w-5 h-5 text-neutral-400 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              New chat
-            </button>
-
-            {/* List of threads */}
-            <div className="space-y-1 mt-4 border-t border-neutral-800/40 pt-4">
-              <div className="px-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Recent</div>
-              {threads.map(t => (
-                <button
-                  key={t.threadId}
-                  onClick={() => setCurrentThreadId(t.threadId)}
-                  className={`w-full text-left px-3 py-2 text-sm truncate rounded-xl transition-colors ${
-                    currentThreadId === t.threadId 
-                      ? "bg-neutral-800 text-white" 
-                      : "text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200"
-                  }`}
-                >
-                  {t.title}
-                </button>
-              ))}
-            </div>
+          {/* List of threads */}
+          <div className="space-y-1 mt-4 border-t border-neutral-800/40 pt-4">
+            <div className="px-3 text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Recent</div>
+            {threads.map(t => (
+              <button
+                key={t.threadId}
+                onClick={() => setCurrentThreadId(t.threadId)}
+                className={`w-full text-left px-3 py-2 text-sm truncate rounded-xl transition-colors ${
+                  currentThreadId === t.threadId 
+                    ? "bg-neutral-800 text-white" 
+                    : "text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-200"
+                }`}
+              >
+                {t.title}
+              </button>
+            ))}
           </div>
         </div>
+      </Sidebar>
+
+      <div className="flex-1 flex h-screen bg-[#0a0a0a] overflow-hidden relative">
 
         {/* Chat Main Area */}
         <div className="flex-1 flex flex-col relative h-full">
@@ -202,6 +198,7 @@ export function ChatClient() {
               <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-5xl font-serif text-white mb-4 tracking-tight">
                   kya hukam hai mere aka
+                  {userName && <><br />{userName}</>}
                 </h1>
               </div>
 
@@ -212,12 +209,17 @@ export function ChatClient() {
                     <button
                       key={idx}
                       onClick={() => handlePill(pill.label)}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900/60 border border-neutral-800 hover:bg-neutral-800 hover:border-neutral-700 transition-all text-sm font-medium text-neutral-300 hover:text-white"
+                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900/60 border border-neutral-700 hover:bg-white hover:text-black hover:border-white transition-all text-sm font-medium text-neutral-300 group"
                     >
-                      <svg className="w-4 h-4 text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 text-neutral-400 shrink-0 group-hover:text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={pill.icon} />
                       </svg>
                       {pill.label}
+                      {pill.shortcut && (
+                        <span className="ml-1 px-2 py-0.5 text-[10px] bg-neutral-800 rounded text-neutral-500 group-hover:bg-neutral-200 group-hover:text-neutral-800 transition-colors">
+                          {pill.shortcut}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -240,13 +242,57 @@ export function ChatClient() {
                     </div>
                   )}
 
-                  <div
-                    className={`max-w-2xl rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${msg.role === "user"
-                      ? "bg-neutral-800 text-neutral-100"
-                      : "bg-transparent text-neutral-200"
-                      }`}
-                  >
-                    {msg.content}
+                  <div className="flex flex-col gap-2 w-full max-w-3xl">
+                    <div
+                      className={`rounded-3xl px-5 py-4 text-sm leading-relaxed ${msg.role === "user"
+                        ? "bg-neutral-800 text-neutral-100 max-w-2xl ml-auto"
+                        : "bg-neutral-900/40 border border-neutral-800/60 shadow-sm text-neutral-200"
+                        }`}
+                    >
+                      {msg.role === "agent" ? (
+                        <div className="text-neutral-200 markdown-body">
+                          <ReactMarkdown 
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                              p: ({node, ...props}) => <p className="mb-4 last:mb-0" {...props} />,
+                              a: ({node, ...props}) => <a className="text-indigo-400 hover:text-indigo-300 underline" target="_blank" rel="noreferrer" {...props} />,
+                              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 last:mb-0 space-y-1" {...props} />,
+                              ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-4 last:mb-0 space-y-1" {...props} />,
+                              li: ({node, ...props}) => <li className="" {...props} />,
+                              strong: ({node, ...props}) => <strong className="font-bold text-white" {...props} />,
+                              code: ({node, inline, ...props}: any) => 
+                                inline 
+                                  ? <code className="bg-neutral-800 px-1.5 py-0.5 rounded text-indigo-300 text-xs" {...props} />
+                                  : <code className="block bg-neutral-900/80 border border-neutral-700/50 p-3 rounded-lg overflow-x-auto text-xs my-3" {...props} />,
+                            }}
+                          >
+                            {msg.content}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                      )}
+                    </div>
+                    {msg.role === "agent" && msg.content.includes("https://meet.google.com/") && (
+                      <div className="pl-2">
+                        {(() => {
+                          const meetLinkMatch = msg.content.match(/(https:\/\/meet\.google\.com\/[a-zA-Z0-9-]+)/);
+                          if (meetLinkMatch) {
+                            return (
+                              <a
+                                href={meetLinkMatch[1]}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm rounded-xl px-4 py-2 transition-colors shadow-sm"
+                              >
+                                Join Meeting →
+                              </a>
+                            );
+                          }
+                          return null;
+                        })()}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

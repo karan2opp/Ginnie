@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
 import { fetchInboxData } from "./inbox.service";
+import { EmailListClient } from "./EmailListClient";
 
 export default async function InboxPage({ searchParams }: any) {
   const { userId } = await auth();
@@ -84,28 +85,7 @@ export default async function InboxPage({ searchParams }: any) {
             <>
               {/* Email List Column */}
               {!messageId && (
-                <div className="flex flex-col w-full h-full overflow-y-auto bg-neutral-950">
-                  {emails.length === 0 ? (
-                    <div className="p-10 text-center text-neutral-500">Folder is empty.</div>
-                  ) : (
-                    <div className="divide-y divide-neutral-800/40">
-                      {emails.map((email) => (
-                        <Link 
-                          key={email.id}
-                          href={`/inbox?folder=${folder}&messageId=${email.id}`}
-                          className="block p-5 hover:bg-neutral-900/50 transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="font-semibold truncate pr-2 text-neutral-200">{email.from}</p>
-                            <span className="text-xs text-neutral-500 whitespace-nowrap">{email.date}</span>
-                          </div>
-                          <h3 className="text-sm mb-1 truncate text-neutral-400">{email.subject}</h3>
-                          <p className="text-xs text-neutral-600 truncate">{email.snippet}</p>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <EmailListClient folder={folder} />
               )}
 
               {/* Reading Pane Column */}

@@ -15,6 +15,13 @@
       "when": 1781463436726,
       "tag": "0001_rapid_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781520533999,
+      "tag": "0002_pale_eternals",
+      "breakpoints": true
     }
   ]
 }

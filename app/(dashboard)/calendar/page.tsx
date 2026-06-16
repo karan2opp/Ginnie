@@ -136,7 +136,10 @@ export default async function CalendarPage({ searchParams }: any) {
                 height: `${Math.max(e.durationHours * 60, 20)}px`
               }}
             >
-              <span className="font-semibold block truncate">{e.summary}</span>
+              <span className="font-semibold block truncate">
+                {e.isUrgent && <span className="mr-1" title="Urgent">🔴</span>}
+                {e.summary}
+              </span>
               <span className="text-neutral-400 block truncate">{e.timeString}</span>
             </a>
           ))}
@@ -227,6 +230,7 @@ export default async function CalendarPage({ searchParams }: any) {
                               {dayEvents.map((event) => (
                                 <a key={event.id} href={event.htmlLink} target="_blank" rel="noreferrer" className={`block px-2 py-1 text-xs rounded-md truncate transition-colors border ${event.isAllDay ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/30' : 'bg-neutral-800/50 text-neutral-300 border-transparent hover:bg-neutral-800'}`}>
                                   {!event.isAllDay && <span className="font-semibold text-neutral-400 mr-1">{event.timeString}</span>}
+                                  {event.isUrgent && <span className="mr-1" title="Urgent">🔴</span>}
                                   {event.summary}
                                 </a>
                               ))}

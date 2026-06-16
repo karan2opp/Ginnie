@@ -3,6 +3,8 @@ import { db } from '../../../db';
 import { chatMessages } from '../../../db/schema/chat';
 import { eq, asc, and } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     const { userId } = await auth();
     if (!userId) {
