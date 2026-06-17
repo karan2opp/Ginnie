@@ -63,6 +63,6 @@ export async function fetchCalendarEvents(userId: string, queryTimeMin: string, 
       return { isConnected: false, eventsByDate: {} };
     }
     console.error("Error fetching calendar events:", error);
-    return { isConnected: false, eventsByDate: {} };
+    throw error;
   }
 }

@@ -4,15 +4,15 @@ import { gmail } from '@corsair-dev/gmail';
 import { googlecalendar } from '@corsair-dev/googlecalendar';
 import { pool } from './db/index';
 
-export const corsair = createCorsair({
+const globalForCorsair = globalThis as unknown as {
+  corsair: ReturnType<typeof createCorsair> | undefined;
+};
+
+export const corsair = globalForCorsair.corsair ?? createCorsair({
     plugins: [gmail(), googlecalendar()],
     database: pool,
     kek: process.env.CORSAIR_KEK!,
     multiTenancy: true,
 });
 
-// When multiTenancy is true, you must use .withTenant(tenantId) to access plugins!
-// For example:
-// corsair.withTenant('user_123').gmail
-// Use top-level await to get the actual data from the Promise
-// Wrap in async function since top-level await needs ESM
+if (process.env.NODE_ENV !== "production") globalForCorsair.corsair = corsair;

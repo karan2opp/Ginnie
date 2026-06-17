@@ -99,6 +99,6 @@ export async function fetchInboxData(userId: string, folder: string, messageId?:
       return { isConnected: false, emails: [], selectedEmail: null };
     }
     console.error("Error fetching inbox data:", error);
-    return { isConnected: false, emails: [], selectedEmail: null };
+    throw error;
   }
 }
