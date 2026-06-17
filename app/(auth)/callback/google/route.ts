@@ -80,6 +80,18 @@ export async function GET(req: Request) {
       });
     }
 
+    // Ensure integration definitions exist (Self-healing for fresh production databases)
+    await pool.query(`
+      INSERT INTO corsair_integrations (id, name, config, created_at, updated_at) 
+      SELECT gen_random_uuid(), 'gmail', '{}', NOW(), NOW() 
+      WHERE NOT EXISTS (SELECT 1 FROM corsair_integrations WHERE name = 'gmail')
+    `);
+    await pool.query(`
+      INSERT INTO corsair_integrations (id, name, config, created_at, updated_at) 
+      SELECT gen_random_uuid(), 'googlecalendar', '{}', NOW(), NOW() 
+      WHERE NOT EXISTS (SELECT 1 FROM corsair_integrations WHERE name = 'googlecalendar')
+    `);
+
     // Sync tokens with Corsair for integrations manually
     const gmailRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'gmail'`);
     if (gmailRes.rows[0]) {
