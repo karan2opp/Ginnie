@@ -1,9 +1,10 @@
 // src/db/schema/connections.ts
 import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { users } from "./user";
 
 export const connections = pgTable("connections", {
-    id: text("id").primaryKey().default("gen_random_uuid()"),
+    id: text("id").primaryKey().default(sql`gen_random_uuid()::text`),
     userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
     googleEmail: text("google_email").notNull(),   // which google account
     accessToken: text("access_token").notNull(),   // for Gmail + Calendar both

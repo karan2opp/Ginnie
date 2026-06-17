@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 export default async function Home() {
   const { userId } = await auth();
 
-  // If the user is already signed in, redirect them to a protected route (like /chat)
-  // so Clerk doesn't keep bouncing them back here.
+  // If the user is already signed in, redirect them to the connect route
+  // to ensure their Google Account is integrated before proceeding to chat.
   if (userId) {
-    redirect("/chat");
+    redirect("/connect");
   }
 
   // Otherwise, if they are not logged in, redirect to sign-up.
