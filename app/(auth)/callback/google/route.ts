@@ -69,6 +69,7 @@ export async function GET(req: Request) {
       }).where(eq(connections.userId, userId));
     } else {
       await db.insert(connections).values({
+        id: crypto.randomUUID(),
         userId,
         googleEmail:        data.email!,
         accessToken:        tokens.access_token!,
