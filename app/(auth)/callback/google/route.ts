@@ -85,6 +85,14 @@ export async function GET(req: Request) {
     const { setupCorsair } = await import("corsair");
     await setupCorsair(corsair, { tenantId: userId });
 
+    // Ensure production integrations have the correct client credentials
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+      await corsair.keys.gmail.set_client_id(process.env.GOOGLE_CLIENT_ID);
+      await corsair.keys.gmail.set_client_secret(process.env.GOOGLE_CLIENT_SECRET);
+      await corsair.keys.googlecalendar.set_client_id(process.env.GOOGLE_CLIENT_ID);
+      await corsair.keys.googlecalendar.set_client_secret(process.env.GOOGLE_CLIENT_SECRET);
+    }
+
     // Sync tokens with Corsair for integrations manually
     const gmailKeys = corsair.withTenant(userId).gmail.keys;
     await gmailKeys.set_access_token(tokens.access_token!);
