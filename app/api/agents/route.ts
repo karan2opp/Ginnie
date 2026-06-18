@@ -242,8 +242,36 @@ export async function POST(req: Request) {
 
     try {
         const { users } = await import('../../../db/schema/user');
-        const { eq } = await import('drizzle-orm');
+        const { eq, and, gte, count } = await import('drizzle-orm');
         const user = await db.select().from(users).where(eq(users.id, userId)).limit(1).then(res => res[0]);
+
+        // Rate Limiting Logic
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Start of today
+
+        const usageQuery = await db.select({ count: count() })
+            .from(chatMessages)
+            .where(
+                and(
+                    eq(chatMessages.userId, userId),
+                    eq(chatMessages.role, 'user'),
+                    gte(chatMessages.createdAt, today)
+                )
+            );
+        const messagesToday = usageQuery[0].count;
+
+        const plan = user?.plan || 'free';
+        let limit = 30; // Free
+        if (plan === 'pro') limit = 150;
+        else if (plan === 'elite') limit = Infinity;
+
+        if (messagesToday >= limit) {
+            return Response.json({ 
+                error: 'Rate limit exceeded', 
+                message: `You have reached your daily limit of ${limit} requests on the ${plan.toUpperCase()} plan. Please upgrade to continue.`,
+                requiresUpgrade: true
+            }, { status: 429 });
+        }
 
         const enhancedMessage = `[System Info] 
 The user's tenant ID is: "${userId}".

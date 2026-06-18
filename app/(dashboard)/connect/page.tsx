@@ -18,12 +18,18 @@ export default async function ConnectPage() {
     try {
       const gmailRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'gmail'`);
       if (gmailRes.rows[0]) {
-         const existingAccount = await pool.query(`SELECT id FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, gmailRes.rows[0].id]);
+         const existingAccount = await pool.query(`SELECT id, dek FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, gmailRes.rows[0].id]);
+         let needsDek = false;
          if (existingAccount.rowCount === 0) {
             await pool.query(`INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, '{}', NOW(), NOW())`, [userId, gmailRes.rows[0].id]);
+            needsDek = true;
+         } else if (!existingAccount.rows[0].dek) {
+            needsDek = true;
          }
          const gmailKeys = corsair.withTenant(userId!).gmail.keys;
-         await gmailKeys.issue_new_dek();
+         if (needsDek) {
+           await gmailKeys.issue_new_dek();
+         }
          await gmailKeys.set_access_token(connection.accessToken!);
          if (connection.refreshToken) {
            await gmailKeys.set_refresh_token(connection.refreshToken);
@@ -35,12 +41,18 @@ export default async function ConnectPage() {
 
       const calRes = await pool.query(`SELECT id FROM corsair_integrations WHERE name = 'googlecalendar'`);
       if (calRes.rows[0]) {
-         const existingAccount = await pool.query(`SELECT id FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, calRes.rows[0].id]);
+         const existingAccount = await pool.query(`SELECT id, dek FROM corsair_accounts WHERE tenant_id = $1 AND integration_id = $2`, [userId, calRes.rows[0].id]);
+         let needsDek = false;
          if (existingAccount.rowCount === 0) {
             await pool.query(`INSERT INTO corsair_accounts (id, tenant_id, integration_id, config, created_at, updated_at) VALUES (gen_random_uuid(), $1, $2, '{}', NOW(), NOW())`, [userId, calRes.rows[0].id]);
+            needsDek = true;
+         } else if (!existingAccount.rows[0].dek) {
+            needsDek = true;
          }
          const calendarKeys = corsair.withTenant(userId!).googlecalendar.keys;
-         await calendarKeys.issue_new_dek();
+         if (needsDek) {
+           await calendarKeys.issue_new_dek();
+         }
          await calendarKeys.set_access_token(connection.accessToken!);
          if (connection.refreshToken) {
            await calendarKeys.set_refresh_token(connection.refreshToken);

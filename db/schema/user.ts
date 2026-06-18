@@ -8,6 +8,8 @@ export const users = pgTable("users", {
     imageUrl: text("image_url"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    plan: text("plan", { enum: ['free', 'pro', 'elite'] }).default('free').notNull(),
+    planExpiresAt: timestamp("plan_expires_at"),
 });
 
 export type User = typeof users.$inferSelect;

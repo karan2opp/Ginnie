@@ -31,7 +31,7 @@ function extractBody(payload: any): string {
   return "<div style='padding: 1rem; color: #666;'>No content available to display.</div>";
 }
 
-export async function fetchInboxData(userId: string, folder: string, messageId?: string) {
+export async function fetchInboxData(userId: string, folder: string, messageId?: string, pageToken?: string) {
   try {
     const gmailApi = corsair.withTenant(userId).gmail.api;
 
@@ -39,7 +39,8 @@ export async function fetchInboxData(userId: string, folder: string, messageId?:
     const response = await gmailApi.messages.list({
       userId: "me",
       maxResults: 15,
-      labelIds: [folder]
+      labelIds: [folder],
+      ...(pageToken ? { pageToken } : {})
     });
 
     let emails: any[] = [];
@@ -93,10 +94,10 @@ export async function fetchInboxData(userId: string, folder: string, messageId?:
       };
     }
 
-    return { isConnected: true, emails, selectedEmail };
+    return { isConnected: true, emails, selectedEmail, nextPageToken: response.nextPageToken };
   } catch (error: any) {
     if (error.message && error.message.includes("Account not found for tenant")) {
-      return { isConnected: false, emails: [], selectedEmail: null };
+      return { isConnected: false, emails: [], selectedEmail: null, nextPageToken: undefined };
     }
     console.error("Error fetching inbox data:", error);
     throw error;

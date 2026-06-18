@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
 import { fetchInboxData } from "./inbox.service";
 import { EmailListClient } from "./EmailListClient";
-
+import { navLinks } from "@/lib/nav";
 export default async function InboxPage({ searchParams }: any) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
@@ -17,44 +17,40 @@ export default async function InboxPage({ searchParams }: any) {
   let isConnected = false;
   let errorMsg: string | null = null;
   let selectedEmail: any = null;
+  let nextPageToken: string | undefined = undefined;
 
   try {
     const data = await fetchInboxData(userId, folder, messageId);
     isConnected = data.isConnected;
     emails = data.emails;
     selectedEmail = data.selectedEmail;
+    nextPageToken = data.nextPageToken;
   } catch (error: any) {
     console.error("Failed to fetch emails:", error);
     errorMsg = error.message || "Unknown error";
   }
 
-  const navLinks = [
-    { name: "Inbox", href: "/inbox?folder=INBOX", icon: "M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4", isActive: folder === "INBOX" && !messageId },
-    { name: "Sent", href: "/inbox?folder=SENT", icon: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8", isActive: folder === "SENT" && !messageId },
-    { name: "Drafts", href: "/inbox?folder=DRAFT", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z", isActive: folder === "DRAFT" && !messageId },
-    { name: "Calendar", href: "/calendar", icon: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z", isActive: false },
-    { name: "Chat with Ginnie", href: "/chat", icon: "M13 10V3L4 14h7v7l9-11h-7z", isActive: false }
-  ];
+
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 flex">
-      <Sidebar currentPath={`/inbox?folder=${folder}`} navLinks={navLinks} />
+      <Sidebar currentPath={messageId ? "" : `/inbox?folder=${folder}`} navLinks={navLinks} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col h-screen">
+      <div className="flex-1 flex flex-col h-screen overflow-hidden bg-[#0a0a0a]">
         {/* Header */}
         {!messageId && (
-          <header className="h-20 border-b border-neutral-800/60 bg-neutral-950/80 backdrop-blur-xl flex items-center justify-between px-8 sticky top-0 z-10 shrink-0">
-            <h1 className="text-2xl font-bold text-white capitalize">
+          <header className="h-20 border-b border-[#1a1a1a] bg-[#0a0a0a] flex items-center justify-between px-8 sticky top-0 z-10 shrink-0 min-w-0">
+            <h1 className="text-2xl font-bold text-white capitalize truncate pr-4">
               {folder.toLowerCase()}
             </h1>
-            <div className="relative group">
+            <div className="relative group shrink-0">
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="pl-11 pr-4 py-2.5 rounded-xl bg-neutral-900 border border-neutral-800 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 w-64 transition-all placeholder:text-neutral-600 font-medium text-sm text-neutral-200"
+                className="pl-11 pr-4 py-2.5 rounded-xl bg-[#111111] border border-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 w-64 transition-all placeholder:text-neutral-600 font-medium text-sm text-neutral-200"
               />
-              <svg className="w-4 h-4 text-neutral-500 absolute left-4 top-3.5 group-focus-within:text-indigo-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-neutral-500 absolute left-4 top-3.5 group-focus-within:text-[#10b981] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
@@ -85,7 +81,7 @@ export default async function InboxPage({ searchParams }: any) {
             <>
               {/* Email List Column */}
               {!messageId && (
-                <EmailListClient folder={folder} />
+                <EmailListClient folder={folder} initialEmails={emails} initialNextPageToken={nextPageToken} />
               )}
 
               {/* Reading Pane Column */}
@@ -151,9 +147,9 @@ export default async function InboxPage({ searchParams }: any) {
                           Using an iframe prevents the email's inline styles from breaking the dark theme,
                           and provides a white canvas for standard HTML emails to look correct.
                         */}
-                        <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden border border-neutral-800/60">
+                        <div className="w-full h-full bg-[#111111] rounded-xl shadow-2xl overflow-hidden border border-neutral-800/60">
                           <iframe 
-                            srcDoc={selectedEmail.bodyHtml}
+                            srcDoc={`<style>*, body { color: #ffffff !important; background-color: #111111 !important; color-scheme: dark; } a, a * { color: #60a5fa !important; }</style>` + selectedEmail.bodyHtml}
                             className="w-full h-full"
                             sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                           />

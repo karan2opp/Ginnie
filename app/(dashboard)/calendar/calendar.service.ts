@@ -66,3 +66,35 @@ export async function fetchCalendarEvents(userId: string, queryTimeMin: string, 
     throw error;
   }
 }
+
+export async function createCalendarEvent(userId: string, data: { title: string, start: Date, end: Date, description?: string, addMeet?: boolean }) {
+  try {
+    const calendarApi = corsair.withTenant(userId).googlecalendar.api;
+
+    const eventParams: any = {
+      calendarId: "primary",
+      requestBody: {
+        summary: data.title,
+        description: data.description || "",
+        start: { dateTime: data.start.toISOString() },
+        end: { dateTime: data.end.toISOString() },
+      }
+    };
+
+    if (data.addMeet) {
+      eventParams.conferenceDataVersion = 1;
+      eventParams.requestBody.conferenceData = {
+        createRequest: {
+          requestId: Math.random().toString(36).substring(7),
+          conferenceSolutionKey: { type: "hangoutsMeet" }
+        }
+      };
+    }
+
+    const response = await calendarApi.events.create(eventParams);
+    return { success: true, event: response.data };
+  } catch (error) {
+    console.error("Error creating calendar event:", error);
+    throw error;
+  }
+}

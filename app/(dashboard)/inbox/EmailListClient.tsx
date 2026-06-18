@@ -4,25 +4,71 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export function EmailListClient({ folder }: { folder: string }) {
+export function EmailListClient({ folder, initialEmails = [], initialNextPageToken }: { folder: string, initialEmails?: any[], initialNextPageToken?: string }) {
   const [filter, setFilter] = useState("all");
-  const [emails, setEmails] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [emails, setEmails] = useState<any[]>(initialEmails);
+  const [loading, setLoading] = useState(folder === "INBOX");
+  const [nextPageToken, setNextPageToken] = useState<string | undefined>(initialNextPageToken);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    if (folder !== "INBOX") {
+      setEmails(initialEmails);
+      setNextPageToken(initialNextPageToken);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    fetch(`/api/emails?filter=${filter}`)
+    fetch(`/api/emails?filter=${filter}&folder=INBOX`)
       .then(res => res.json())
       .then(data => {
         setEmails(data.emails || []);
+        // Only set nextPageToken on initial load if we don't have one, or if it changed
+        if (data.nextPageToken) setNextPageToken(data.nextPageToken);
         setLoading(false);
       })
       .catch(err => {
         console.error("Error fetching emails:", err);
         setLoading(false);
       });
-  }, [filter]);
+  }, [filter, folder]); // Don't include initialEmails/Token to prevent infinite re-fetches
+
+  const loadMore = async () => {
+    if (!nextPageToken || isFetchingMore) return;
+    setIsFetchingMore(true);
+    try {
+      const res = await fetch(`/api/emails?filter=${filter}&folder=${folder}&pageToken=${nextPageToken}`);
+      const data = await res.json();
+      if (data.emails) {
+        // Prevent duplicates
+        const existingIds = new Set(emails.map(e => e.id));
+        const newEmails = data.emails.filter((e: any) => !existingIds.has(e.id));
+        setEmails(prev => [...prev, ...newEmails]);
+      }
+      setNextPageToken(data.nextPageToken);
+    } catch (error) {
+      console.error("Failed to load more emails:", error);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  };
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const sentinel = document.getElementById("scroll-sentinel");
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && nextPageToken && !isFetchingMore) {
+        loadMore();
+      }
+    }, { rootMargin: '100px' });
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [nextPageToken, isFetchingMore, emails]);
 
   const updatePriority = async (id: string, priority: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -42,30 +88,39 @@ export function EmailListClient({ folder }: { folder: string }) {
     }
   };
 
+  // Helper to format dates consistently
+  const formatDate = (dateStr: string | Date) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr); // fallback for plain string
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
+
   return (
-    <div className="flex flex-col w-full h-full bg-neutral-950">
-      {/* Filter Tabs */}
-      <div className="flex items-center gap-2 p-4 border-b border-neutral-800/40 shrink-0">
-        <button
-          onClick={() => setFilter("all")}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filter === "all" ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"}`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter("primary")}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filter === "primary" ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"}`}
-        >
-          Primary
-        </button>
-        <button
-          onClick={() => setFilter("urgent")}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex items-center gap-2 ${filter === "urgent" ? "bg-neutral-800 text-white" : "text-neutral-400 hover:text-white"}`}
-        >
-          Urgent
-          <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
-        </button>
-      </div>
+    <div className="flex flex-col w-full h-full bg-[#0a0a0a] relative">
+      {/* Filter Tabs - Only for INBOX */}
+      {folder === "INBOX" && (
+        <div className="flex items-center gap-6 p-6 border-b border-[#1a1a1a] shrink-0">
+          <button
+            onClick={() => setFilter("all")}
+            className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${filter === "all" ? "bg-white text-black" : "text-neutral-500 hover:text-white"}`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilter("primary")}
+            className={`text-sm font-semibold transition-colors ${filter === "primary" ? "text-white" : "text-neutral-500 hover:text-white"}`}
+          >
+            Primary
+          </button>
+          <button
+            onClick={() => setFilter("urgent")}
+            className={`text-sm font-semibold transition-colors flex items-center gap-2 ${filter === "urgent" ? "text-white" : "text-neutral-500 hover:text-white"}`}
+          >
+            Urgent
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          </button>
+        </div>
+      )}
 
       {/* Email List */}
       <div className="flex-1 overflow-y-auto">
@@ -74,51 +129,73 @@ export function EmailListClient({ folder }: { folder: string }) {
         ) : emails.length === 0 ? (
           <div className="p-10 text-center text-neutral-500">No emails found.</div>
         ) : (
-          <div className="divide-y divide-neutral-800/40">
+          <div className="divide-y divide-[#1a1a1a]">
             {emails.map((email) => (
               <div key={email.id} className="relative group block">
                 <Link 
                   href={`/inbox?folder=${folder}&messageId=${email.id}`}
-                  className="block p-5 hover:bg-neutral-900/50 transition-colors cursor-pointer pr-16"
+                  className="block p-6 hover:bg-[#111111] transition-colors cursor-pointer pr-16"
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                      {email.priority === "urgent" && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-red-500/20 text-red-400 border border-red-500/30 rounded-md shrink-0">Urgent</span>
-                      )}
-                      {email.priority === "primary" && (
-                        <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-md shrink-0">Primary</span>
-                      )}
-                      <p className="font-semibold truncate text-neutral-200">{email.from}</p>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between gap-2 overflow-hidden">
+                      <p className="font-bold text-lg truncate text-white">{email.from}</p>
+                      <span className="text-xs text-neutral-500 shrink-0">{formatDate(email.date)}</span>
                     </div>
-                    <span className="text-xs text-neutral-500 whitespace-nowrap shrink-0">{new Date(email.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                    <h3 className="text-base font-semibold truncate text-white flex items-center gap-2">
+                      {email.subject}
+                      {email.priority === 'urgent' && <span className="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>}
+                      {email.priority === 'primary' && <span className="w-2 h-2 rounded-full bg-[#10b981] shrink-0"></span>}
+                    </h3>
+                    <p className="text-sm text-neutral-500 truncate">{email.snippet}</p>
                   </div>
-                  <h3 className="text-sm mb-1 truncate text-neutral-400">{email.subject}</h3>
-                  <p className="text-xs text-neutral-600 truncate">{email.snippet}</p>
                 </Link>
 
                 {/* Quick Actions (Hover) */}
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-neutral-900/80 backdrop-blur-sm p-1 rounded-lg border border-neutral-800 shadow-lg">
-                  <button onClick={(e) => updatePriority(email.id, "urgent", e)} className="p-1.5 hover:bg-neutral-800 rounded-md text-neutral-400 hover:text-red-400 transition-colors" title="Mark as Urgent">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-[#1a1a1a] p-1 rounded-lg shadow-lg">
+                  <button onClick={(e) => updatePriority(email.id, "urgent", e)} className="p-2 hover:bg-[#2a2a2a] rounded-md text-neutral-400 hover:text-red-400 transition-colors" title="Mark as Urgent">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                   </button>
-                  <button onClick={(e) => updatePriority(email.id, "primary", e)} className="p-1.5 hover:bg-neutral-800 rounded-md text-neutral-400 hover:text-blue-400 transition-colors" title="Mark as Primary">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <button onClick={(e) => updatePriority(email.id, "primary", e)} className="p-2 hover:bg-[#2a2a2a] rounded-md text-neutral-400 hover:text-[#10b981] transition-colors" title="Mark as Primary">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </button>
-                  <button onClick={(e) => updatePriority(email.id, "normal", e)} className="p-1.5 hover:bg-neutral-800 rounded-md text-neutral-400 hover:text-white transition-colors" title="Mark as Normal">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <button onClick={(e) => updatePriority(email.id, "normal", e)} className="p-2 hover:bg-[#2a2a2a] rounded-md text-neutral-400 hover:text-white transition-colors" title="Mark as Normal">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                     </svg>
                   </button>
                 </div>
               </div>
             ))}
+            
+            {/* Infinite Scroll Sentinel */}
+            {nextPageToken && (
+              <div id="scroll-sentinel" className="p-8 flex justify-center">
+                {isFetchingMore ? (
+                   <div className="flex items-center gap-2 text-[#10b981]">
+                     <span className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce [animation-delay:-0.3s]"></span>
+                     <span className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce [animation-delay:-0.15s]"></span>
+                     <span className="w-2 h-2 rounded-full bg-[#10b981] animate-bounce"></span>
+                   </div>
+                ) : (
+                   <div className="h-8"></div>
+                )}
+              </div>
+            )}
           </div>
         )}
+      </div>
+
+      {/* FAB Compose Button */}
+      <div className="absolute bottom-6 right-6">
+        <button className="w-14 h-14 bg-[#10b981] hover:bg-[#0ea5e9] hover:bg-emerald-400 transition-colors rounded-2xl shadow-lg flex items-center justify-center text-black">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </button>
       </div>
     </div>
   );

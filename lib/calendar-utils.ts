@@ -89,6 +89,9 @@ export function parseGoogleEvents(items: any[]) {
       timeString: startTime,
       isAllDay,
       htmlLink: event.htmlLink,
+      hangoutLink: event.hangoutLink || null,
+      description: event.description || "",
+      location: event.location || "",
       startHour,
       startMin,
       durationHours

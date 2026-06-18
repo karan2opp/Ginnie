@@ -47,3 +47,4 @@ export * from "./connection";
 export * from "./corsair";
 export * from "./chat";
 export * from "./emails";
+export * from "./orders";
