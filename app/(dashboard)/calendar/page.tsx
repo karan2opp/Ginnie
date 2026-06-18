@@ -161,9 +161,8 @@ export default async function CalendarPage({ searchParams }: any) {
       <Sidebar currentPath="/calendar" navLinks={navLinks} />
 
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Header */}
-        <header className="h-20 border-b border-neutral-800/60 bg-neutral-950 flex items-center justify-between px-10 shrink-0">
-          <div className="flex items-center gap-6">
+        <header className="relative z-50 min-h-[80px] py-4 md:py-0 border-b border-neutral-800/60 bg-neutral-950 flex flex-col md:flex-row items-center justify-between px-4 md:px-10 gap-4 shrink-0">
+          <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
             <div className="flex items-center gap-2">
               <Link href={`/calendar?view=${view}&date=${todayStr}`} className="px-4 py-2 text-sm font-medium text-neutral-300 hover:text-white bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg hover:bg-[#222] transition-colors shadow-sm">
                 Today
@@ -179,12 +178,12 @@ export default async function CalendarPage({ searchParams }: any) {
               </div>
             </div>
             
-            <h1 className="text-2xl font-bold text-white w-56 truncate">
+            <h1 className="text-xl md:text-2xl font-bold text-white w-48 md:w-56 truncate">
               {headerTitle}
             </h1>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
             <ViewSelector />
             <CalendarMiniChat />
           </div>
@@ -209,11 +208,12 @@ export default async function CalendarPage({ searchParams }: any) {
             <>
               {/* MONTH VIEW */}
               {view === "month" && (
-                <div className="flex-1 flex flex-col p-8">
-                  <div className="flex-1 flex flex-col min-h-0 bg-[#0f0f0f] border border-[#1a1a1a] rounded-2xl overflow-hidden shadow-2xl">
-                    <div className="grid grid-cols-7 border-b border-[#1a1a1a] bg-[#141414] shrink-0">
+                <div className="flex-1 flex flex-col p-4 sm:p-8 overflow-hidden">
+                  <div className="flex-1 overflow-x-auto overflow-y-hidden rounded-2xl shadow-2xl border border-[#1a1a1a]">
+                    <div className="flex flex-col h-full min-w-[500px] lg:min-w-[700px] bg-[#0f0f0f]">
+                      <div className="grid grid-cols-7 border-b border-[#1a1a1a] bg-[#141414] shrink-0">
                       {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d) => (
-                        <div key={d} className="py-3 text-center text-xs font-bold tracking-widest text-neutral-500">{d}</div>
+                        <div key={d} className="py-2 sm:py-3 text-center text-[10px] sm:text-xs font-bold tracking-widest text-neutral-500">{d}</div>
                       ))}
                     </div>
                     <div className="flex-1 grid grid-cols-7 grid-rows-6">
@@ -222,18 +222,18 @@ export default async function CalendarPage({ searchParams }: any) {
                         return (
                           <div 
                             key={day.dateStr} 
-                            className={`min-h-[80px] p-2 flex flex-col gap-1 border-r border-b border-[#1a1a1a] ${!day.isCurrentMonth ? 'bg-[#0a0a0a]' : 'bg-transparent'} ${idx % 7 === 6 ? 'border-r-0' : ''} ${idx >= 35 ? 'border-b-0' : ''}`}
+                            className={`min-h-[60px] md:min-h-[80px] p-1 sm:p-2 flex flex-col gap-0.5 sm:gap-1 border-r border-b border-[#1a1a1a] ${!day.isCurrentMonth ? 'bg-[#0a0a0a]' : 'bg-transparent'} ${idx % 7 === 6 ? 'border-r-0' : ''} ${idx >= 35 ? 'border-b-0' : ''}`}
                           >
-                            <div className="flex justify-between items-start mb-1">
-                              <span className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium ${day.isToday ? 'bg-[#10b981] text-black shadow-md' : day.isCurrentMonth ? 'text-neutral-300' : 'text-neutral-600'}`}>
+                            <div className="flex justify-between items-start mb-0.5 sm:mb-1">
+                              <span className={`w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full text-[10px] sm:text-sm font-medium ${day.isToday ? 'bg-[#10b981] text-black shadow-md' : day.isCurrentMonth ? 'text-neutral-300' : 'text-neutral-600'}`}>
                                 {day.date.getDate()}
                               </span>
                             </div>
-                            <div className="flex-1 overflow-y-auto space-y-1 custom-scrollbar">
+                            <div className="flex-1 overflow-y-auto space-y-0.5 sm:space-y-1 custom-scrollbar">
                                 {dayEvents.map((event) => (
-                                <Link key={event.id} href={`/calendar?view=${view}&date=${dateParam || todayStr}&eventId=${event.id}`} className={`block px-2 py-1 text-xs rounded-md truncate transition-colors border ${event.isAllDay ? 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20 hover:bg-[#10b981]/20' : 'bg-[#1a1a1a] text-neutral-300 border-transparent hover:bg-[#222]'}`}>
-                                  {!event.isAllDay && <span className="font-semibold text-neutral-400 mr-1">{event.timeString}</span>}
-                                  {event.isUrgent && <span className="mr-1" title="Urgent">🔴</span>}
+                                <Link key={event.id} href={`/calendar?view=${view}&date=${dateParam || todayStr}&eventId=${event.id}`} className={`block px-1 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-xs rounded-sm sm:rounded-md truncate transition-colors border ${event.isAllDay ? 'bg-[#10b981]/10 text-[#10b981] border-[#10b981]/20 hover:bg-[#10b981]/20' : 'bg-[#1a1a1a] text-neutral-300 border-transparent hover:bg-[#222]'}`}>
+                                  {!event.isAllDay && <span className="font-semibold text-neutral-400 mr-1 hidden sm:inline">{event.timeString}</span>}
+                                  {event.isUrgent && <span className="mr-0.5 sm:mr-1" title="Urgent">🔴</span>}
                                   {event.summary}
                                 </Link>
                               ))}
@@ -244,12 +244,14 @@ export default async function CalendarPage({ searchParams }: any) {
                     </div>
                   </div>
                 </div>
+                </div>
               )}
 
               {/* WEEK VIEW */}
               {view === "week" && (
-                <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-hidden relative">
-                  <div className="flex border-b border-[#1a1a1a] bg-[#141414] shrink-0 pl-16">
+                <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-x-auto relative custom-scrollbar">
+                  <div className="min-w-[800px] flex flex-col h-full">
+                    <div className="flex border-b border-[#1a1a1a] bg-[#141414] shrink-0 pl-16">
                     {weekDays.map(day => (
                       <div key={day.dateStr} className="flex-1 py-3 text-center border-r border-[#1a1a1a]">
                         <div className="text-xs font-bold tracking-widest text-neutral-500 mb-1">{['SUN','MON','TUE','WED','THU','FRI','SAT'][day.date.getDay()]}</div>
@@ -277,12 +279,14 @@ export default async function CalendarPage({ searchParams }: any) {
                     </div>
                   </div>
                 </div>
+                </div>
               )}
 
               {/* DAY VIEW */}
               {view === "day" && (
-                <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-hidden relative">
-                  <div className="flex border-b border-[#1a1a1a] bg-[#141414] shrink-0 pl-16">
+                <div className="flex-1 flex flex-col bg-[#0a0a0a] overflow-x-auto relative custom-scrollbar">
+                  <div className="min-w-[300px] sm:min-w-0 flex flex-col h-full">
+                    <div className="flex border-b border-[#1a1a1a] bg-[#141414] shrink-0 pl-16">
                     <div className="flex-1 py-3 text-center">
                       <div className="text-xs font-bold tracking-widest text-neutral-500 mb-1">{['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][targetDate.getDay()]}</div>
                       <div className="inline-flex w-10 h-10 items-center justify-center rounded-full text-xl font-medium bg-[#10b981] text-black shadow-lg">
@@ -306,6 +310,7 @@ export default async function CalendarPage({ searchParams }: any) {
                     <div className="flex-1 flex max-w-4xl mx-auto border-x border-neutral-800/40">
                       {renderTimeGridColumn(getDateStr(targetDate))}
                     </div>
+                  </div>
                   </div>
                 </div>
               )}

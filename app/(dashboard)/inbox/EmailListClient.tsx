@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export function EmailListClient({ folder, initialEmails = [], initialNextPageToken }: { folder: string, initialEmails?: any[], initialNextPageToken?: string }) {
+export function EmailListClient({ folder, initialEmails = [], initialNextPageToken, q = "" }: { folder: string, initialEmails?: any[], initialNextPageToken?: string, q?: string }) {
   const [filter, setFilter] = useState("all");
   const [emails, setEmails] = useState<any[]>(initialEmails);
   const [loading, setLoading] = useState(folder === "INBOX");
@@ -21,7 +21,7 @@ export function EmailListClient({ folder, initialEmails = [], initialNextPageTok
     }
 
     setLoading(true);
-    fetch(`/api/emails?filter=${filter}&folder=INBOX`)
+    fetch(`/api/emails?filter=${filter}&folder=INBOX${q ? `&q=${encodeURIComponent(q)}` : ''}`)
       .then(res => res.json())
       .then(data => {
         setEmails(data.emails || []);
@@ -33,13 +33,13 @@ export function EmailListClient({ folder, initialEmails = [], initialNextPageTok
         console.error("Error fetching emails:", err);
         setLoading(false);
       });
-  }, [filter, folder]); // Don't include initialEmails/Token to prevent infinite re-fetches
+  }, [filter, folder, q]); // Don't include initialEmails/Token to prevent infinite re-fetches
 
   const loadMore = async () => {
     if (!nextPageToken || isFetchingMore) return;
     setIsFetchingMore(true);
     try {
-      const res = await fetch(`/api/emails?filter=${filter}&folder=${folder}&pageToken=${nextPageToken}`);
+      const res = await fetch(`/api/emails?filter=${filter}&folder=${folder}&pageToken=${nextPageToken}${q ? `&q=${encodeURIComponent(q)}` : ''}`);
       const data = await res.json();
       if (data.emails) {
         // Prevent duplicates

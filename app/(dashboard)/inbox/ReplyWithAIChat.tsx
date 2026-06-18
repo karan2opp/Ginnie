@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -10,7 +9,7 @@ interface Message {
   content: string;
 }
 
-export function CalendarMiniChat() {
+export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -18,7 +17,6 @@ export function CalendarMiniChat() {
   const [threadId, setThreadId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   // Auto scroll to bottom
   useEffect(() => {
@@ -37,7 +35,7 @@ export function CalendarMiniChat() {
       const res = await fetch("/api/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, threadId }),
+        body: JSON.stringify({ message: userMessage, threadId, emailContext }),
       });
 
       const data = await res.json();
@@ -48,11 +46,6 @@ export function CalendarMiniChat() {
       const reply = data.reply || data.error;
       setMessages(prev => [...prev, { role: "agent", content: reply }]);
 
-      // If the agent successfully scheduled a meeting, refresh the calendar
-      if (reply.includes("Meeting scheduled!")) {
-        router.refresh();
-      }
-
     } catch {
       setMessages(prev => [...prev, { role: "agent", content: "Something went wrong. Try again." }]);
     } finally {
@@ -62,19 +55,32 @@ export function CalendarMiniChat() {
 
   return (
     <div className="relative z-[100]">
+      {/* Trigger Button */}
+      {!isOpen && (
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="bg-[#10b981]/10 text-[#10b981] hover:bg-[#10b981]/20 px-3 py-1.5 text-xs rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5 mr-2"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          Reply with AI
+        </button>
+      )}
+
       {/* Chat Window */}
       {isOpen && (
-        <div className="absolute top-14 right-0 bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl shadow-2xl w-80 sm:w-96 h-[500px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
+        <div className="absolute top-10 right-0 bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl shadow-2xl w-80 sm:w-96 h-[400px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
           {/* Header */}
-          <div className="h-14 bg-[#141414] border-b border-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
+          <div className="h-12 bg-[#141414] border-b border-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[#10b981]/20 flex items-center justify-center shrink-0">
-                <span className="text-[#10b981] font-bold">G</span>
+              <div className="w-6 h-6 rounded-full bg-[#10b981] flex items-center justify-center shrink-0">
+                <span className="text-black font-bold text-xs">G</span>
               </div>
-              <h3 className="font-semibold text-white">Ginnie Assistant</h3>
+              <h3 className="font-semibold text-sm text-white">Ginnie</h3>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-white transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -84,18 +90,18 @@ export function CalendarMiniChat() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#0a0a0a]">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                <div className="w-12 h-12 bg-[#10b981]/10 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-[#10b981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <div className="w-10 h-10 bg-[#10b981]/10 rounded-full flex items-center justify-center mb-3">
+                  <svg className="w-5 h-5 text-[#10b981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                   </svg>
                 </div>
-                <p className="text-neutral-300 font-medium mb-1">Schedule a meeting?</p>
-                <p className="text-neutral-500 text-xs">Try saying: "Set up a sync with bob@example.com for tomorrow at 3pm"</p>
+                <p className="text-neutral-300 font-medium text-sm mb-1">Reply to this email?</p>
+                <p className="text-neutral-500 text-xs">"Draft a polite decline" or "Tell them I'll be there"</p>
               </div>
             ) : (
               messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
                     msg.role === "user" 
                       ? "bg-[#111111] text-white border border-[#1a1a1a]" 
                       : "bg-[#10b981]/10 text-neutral-200 border border-[#10b981]/20"
@@ -122,7 +128,7 @@ export function CalendarMiniChat() {
             
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-[#10b981]/10 text-neutral-200 border border-[#10b981]/20 rounded-2xl px-4 py-3 flex items-center gap-1">
+                <div className="bg-[#10b981]/10 text-neutral-200 border border-[#10b981]/20 rounded-2xl px-3 py-2 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-bounce [animation-delay:0ms]" />
                   <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-bounce [animation-delay:150ms]" />
                   <span className="w-1.5 h-1.5 bg-[#10b981] rounded-full animate-bounce [animation-delay:300ms]" />
@@ -151,15 +157,15 @@ export function CalendarMiniChat() {
                 }}
                 rows={1}
                 placeholder="Ask Ginnie..."
-                className="flex-1 bg-transparent border-none outline-none text-neutral-200 placeholder-neutral-500 py-1.5 px-2 text-sm resize-none custom-scrollbar max-h-32"
-                style={{ minHeight: '32px' }}
+                className="flex-1 bg-transparent border-none outline-none text-neutral-200 placeholder-neutral-500 py-1.5 px-2 text-xs resize-none custom-scrollbar max-h-32"
+                style={{ minHeight: '28px' }}
               />
               <button
                 onClick={sendMessage}
                 disabled={loading || !input.trim()}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#10b981] hover:bg-emerald-400 text-black transition-colors disabled:opacity-30 ml-1"
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-[#10b981] hover:bg-emerald-400 text-black transition-colors disabled:opacity-30 ml-1"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
               </button>
@@ -167,20 +173,6 @@ export function CalendarMiniChat() {
           </div>
         </div>
       )}
-
-      {/* Trigger Button in Header */}
-      {!isOpen && (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="bg-[#10b981] hover:bg-emerald-400 text-black px-4 py-2 text-sm rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-          </svg>
-          New Event
-        </button>
-      )}
-
     </div>
   );
 }

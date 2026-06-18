@@ -93,5 +93,56 @@ export async function fetchDashboardStats(userId: string) {
     console.error("Error fetching usage from db:", err);
   }
 
-  return { isConnected, stats };
+  // 4. Fetch Today's Agenda
+  let todaysAgenda: any[] = [];
+  try {
+    const calendarApi = corsair.withTenant(userId).googlecalendar.api;
+    const now = new Date();
+    const startOfToday = new Date(now);
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date(now);
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const agendaRes = await calendarApi.events.getMany({
+      calendarId: "primary",
+      timeMin: startOfToday.toISOString(),
+      timeMax: endOfToday.toISOString(),
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: "startTime",
+    }).catch(() => ({ items: [] }));
+
+    todaysAgenda = (agendaRes.items || []).map((event: any) => ({
+      id: event.id,
+      title: event.summary || "No Title",
+      startTime: event.start?.dateTime || event.start?.date,
+      endTime: event.end?.dateTime || event.end?.date,
+      meetLink: event.hangoutLink || null,
+    }));
+  } catch (err) {
+    console.error("Error fetching agenda:", err);
+  }
+
+  // 5. Fetch Recent AI Activity
+  let recentActivity: any[] = [];
+  try {
+    // get latest 3 user messages (which represent tasks/chats)
+    const recentRes = await db
+      .select()
+      .from(chatMessages)
+      .where(and(eq(chatMessages.userId, userId), eq(chatMessages.role, "user")))
+      .orderBy(chatMessages.createdAt) // Since we don't have a desc method imported, we will fetch last few and reverse
+      .limit(20);
+      
+    // Reverse and take top 3
+    recentActivity = recentRes.reverse().slice(0, 3).map(msg => ({
+      id: msg.id,
+      content: msg.content,
+      createdAt: msg.createdAt,
+    }));
+  } catch (err) {
+    console.error("Error fetching recent activity:", err);
+  }
+
+  return { isConnected, stats, todaysAgenda, recentActivity };
 }

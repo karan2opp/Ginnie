@@ -88,53 +88,50 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
     }
   }
 
-  // Action pill click — prefills input
-  function handlePill(label: string) {
+  function handleAction(id: string) {
     const prompts: Record<string, string> = {
-      Write: "Write an email to ",
-      Summarize: "Summarize my latest emails",
-      Analyze: "Analyze my inbox and tell me what needs attention",
-      "Create a meeting": "Create a calendar event for ",
+      unread: "Show my unread emails",
+      summary: "Give me a quick summary of my last 3 emails",
+      meeting: "Create a calendar event for ",
+      agenda: "What is on my agenda for today?",
     };
-    setInput(prompts[label] || "");
+    setInput(prompts[id] || "");
   }
 
-
-
-  const actionPills = [
-    { icon: "M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z", label: "Write", shortcut: "Alt W" },
-    { icon: "M4 6h16M4 12h8m-8 6h16", label: "Summarize", shortcut: "Alt U" },
-    { icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z", label: "Analyze", shortcut: "Alt A" },
-    { icon: "M12 4v16m8-8H4", label: "Create a meeting", shortcut: "Alt M" }
-  ];
-
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.altKey && !e.shiftKey) {
-        switch (e.key.toLowerCase()) {
-          case 'w':
-            e.preventDefault();
-            handlePill("Write");
-            break;
-          case 'u':
-            e.preventDefault();
-            handlePill("Summarize");
-            break;
-          case 'a':
-            e.preventDefault();
-            handlePill("Analyze");
-            break;
-          case 'm':
-            e.preventDefault();
-            handlePill("Create a meeting");
-            break;
-        }
-      }
+  const actionCards = [
+    { 
+      id: "unread",
+      icon: <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+      bg: "bg-blue-950/20 hover:bg-blue-900/30",
+      border: "border-blue-900/40",
+      title: "Unread emails",
+      subtitle: "See what's waiting in your inbox",
+    },
+    { 
+      id: "summary",
+      icon: <svg className="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
+      bg: "bg-yellow-950/20 hover:bg-yellow-900/30",
+      border: "border-yellow-900/40",
+      title: "Quick summary",
+      subtitle: "Catch up on your last 3 emails",
+    },
+    { 
+      id: "meeting",
+      icon: <svg className="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+      bg: "bg-rose-950/20 hover:bg-rose-900/30",
+      border: "border-rose-900/40",
+      title: "Schedule a meeting",
+      subtitle: "Create a calendar event with invites",
+    },
+    { 
+      id: "agenda",
+      icon: <svg className="w-5 h-5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
+      bg: "bg-teal-950/20 hover:bg-teal-900/30",
+      border: "border-teal-900/40",
+      title: "Today's agenda",
+      subtitle: "See all events on your calendar today",
     }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  ];
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-200 flex">
       <Sidebar currentPath="/chat" navLinks={navLinks}>
@@ -177,14 +174,7 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
         {/* Chat Main Area */}
         <div className="flex-1 flex flex-col relative h-full">
 
-          {/* Profile Icon */}
-          <div className="absolute top-4 right-6 z-10">
-            <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center border border-neutral-700">
-              <svg className="w-6 h-6 text-neutral-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-              </svg>
-            </div>
-          </div>
+
 
           {/* Main Content Area */}
           {!isMounted ? (
@@ -193,32 +183,26 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
             <div className="flex-1 flex flex-col items-center justify-center p-8">
               <div className="text-center mb-12">
                 <h1 className="text-5xl md:text-6xl font-serif text-white mb-4 tracking-tight leading-tight">
-                  kya hukam hai mere aka
-                  {userName && <><br />{userName}</>}
+                  Make a wish{userName ? `, ${userName}` : ""}
                 </h1>
               </div>
-
-              {/* Action Pills — only on welcome */}
+              {/* Action Cards */}
               <div className="w-full max-w-3xl flex flex-col items-center">
-                <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-                  {actionPills.map((pill, idx) => (
+                <p className="text-neutral-400 mb-6 font-medium">What can I help with tonight?</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                  {actionCards.map((card) => (
                     <button
-                      key={idx}
-                      onClick={() => handlePill(pill.label)}
-                      className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1a1a1a] hover:bg-[#222222] transition-all text-sm font-medium text-white group"
+                      key={card.id}
+                      onClick={() => handleAction(card.id)}
+                      className={`flex items-start text-left gap-4 p-5 rounded-2xl border transition-all ${card.bg} ${card.border}`}
                     >
-                      <span className="text-neutral-500 group-hover:text-neutral-400">
-                        {pill.label === "Write" && "📝"}
-                        {pill.label === "Summarize" && "≡"}
-                        {pill.label === "Analyze" && "📊"}
-                        {pill.label === "Create a meeting" && "+"}
-                      </span>
-                      {pill.label}
-                      {pill.shortcut && (
-                        <span className="ml-1 px-2 py-0.5 text-[10px] bg-neutral-800 rounded text-neutral-500 font-mono">
-                          {pill.shortcut}
-                        </span>
-                      )}
+                      <div className="mt-0.5 shrink-0">
+                        {card.icon}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-white font-semibold">{card.title}</span>
+                        <span className="text-sm text-neutral-400">{card.subtitle}</span>
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -320,18 +304,29 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
           <div className="p-4 w-full max-w-3xl mx-auto">
             <div className="w-full relative flex items-center bg-[#111111] border border-neutral-800/60 rounded-[20px] p-2 shadow-2xl transition-colors">
               <div className="pl-3 pr-2 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-lg bg-neutral-900/50 flex items-center justify-center">
-                  <span className="text-[#10b981] text-xs font-bold font-mono">{`}`}</span>
+                <div className="w-8 h-8 rounded-lg bg-[#10b981] flex items-center justify-center text-black font-bold shadow-sm shrink-0">
+                  G
                 </div>
               </div>
 
-              <input
-                type="text"
+              <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && sendMessage()}
+                onKeyDown={e => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = "auto";
+                  target.style.height = `${target.scrollHeight}px`;
+                }}
+                rows={1}
                 placeholder="Message Ginnie..."
-                className="flex-1 bg-transparent border-none outline-none text-neutral-200 placeholder-neutral-500 py-2.5 text-base px-2"
+                className="flex-1 bg-transparent border-none outline-none text-neutral-200 placeholder-neutral-500 py-2.5 text-base px-2 resize-none custom-scrollbar max-h-48"
+                style={{ minHeight: '44px' }}
               />
 
               <button

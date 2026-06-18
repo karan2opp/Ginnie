@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
 import { fetchInboxData } from "./inbox.service";
 import { EmailListClient } from "./EmailListClient";
+import { InboxSearch } from "./InboxSearch";
+import { ReplyWithAIChat } from "./ReplyWithAIChat";
 import { navLinks } from "@/lib/nav";
 export default async function InboxPage({ searchParams }: any) {
   const { userId } = await auth();
@@ -12,6 +14,7 @@ export default async function InboxPage({ searchParams }: any) {
   const params = await searchParams;
   const folder = params?.folder || "INBOX";
   const messageId = params?.messageId;
+  const q = params?.q || "";
 
   let emails: any[] = [];
   let isConnected = false;
@@ -20,7 +23,7 @@ export default async function InboxPage({ searchParams }: any) {
   let nextPageToken: string | undefined = undefined;
 
   try {
-    const data = await fetchInboxData(userId, folder, messageId);
+    const data = await fetchInboxData(userId, folder, messageId, undefined, q);
     isConnected = data.isConnected;
     emails = data.emails;
     selectedEmail = data.selectedEmail;
@@ -44,16 +47,7 @@ export default async function InboxPage({ searchParams }: any) {
             <h1 className="text-2xl font-bold text-white capitalize truncate pr-4">
               {folder.toLowerCase()}
             </h1>
-            <div className="relative group shrink-0">
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="pl-11 pr-4 py-2.5 rounded-xl bg-[#111111] border border-[#1a1a1a] focus:outline-none focus:ring-1 focus:ring-[#10b981]/50 focus:border-[#10b981]/50 w-64 transition-all placeholder:text-neutral-600 font-medium text-sm text-neutral-200"
-              />
-              <svg className="w-4 h-4 text-neutral-500 absolute left-4 top-3.5 group-focus-within:text-[#10b981] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            <InboxSearch />
           </header>
         )}
 
@@ -81,7 +75,7 @@ export default async function InboxPage({ searchParams }: any) {
             <>
               {/* Email List Column */}
               {!messageId && (
-                <EmailListClient folder={folder} initialEmails={emails} initialNextPageToken={nextPageToken} />
+                <EmailListClient folder={folder} initialEmails={emails} initialNextPageToken={nextPageToken} q={q} />
               )}
 
               {/* Reading Pane Column */}
@@ -123,6 +117,7 @@ export default async function InboxPage({ searchParams }: any) {
                         <div className="flex items-center gap-4 shrink-0">
                           <span className="text-xs text-neutral-500 hidden md:block">{selectedEmail.date}</span>
                           <div className="flex items-center gap-1 border-l border-neutral-800/60 pl-4">
+                            <ReplyWithAIChat emailContext={selectedEmail} />
                             <button className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-full transition-colors" title="Reply">
                               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />

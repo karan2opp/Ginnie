@@ -31,7 +31,7 @@ function extractBody(payload: any): string {
   return "<div style='padding: 1rem; color: #666;'>No content available to display.</div>";
 }
 
-export async function fetchInboxData(userId: string, folder: string, messageId?: string, pageToken?: string) {
+export async function fetchInboxData(userId: string, folder: string, messageId?: string, pageToken?: string, q?: string) {
   try {
     const gmailApi = corsair.withTenant(userId).gmail.api;
 
@@ -39,7 +39,8 @@ export async function fetchInboxData(userId: string, folder: string, messageId?:
     const response = await gmailApi.messages.list({
       userId: "me",
       maxResults: 15,
-      labelIds: [folder],
+      labelIds: q ? undefined : [folder],
+      ...(q ? { q: folder === "INBOX" ? `in:inbox ${q}` : `in:${folder} ${q}` } : {}),
       ...(pageToken ? { pageToken } : {})
     });
 

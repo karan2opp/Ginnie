@@ -19,15 +19,17 @@ export async function GET(req: Request) {
     const filter = searchParams.get("filter") || "all";
     const folder = searchParams.get("folder") || "INBOX";
     const pageToken = searchParams.get("pageToken") || undefined;
+    const q = searchParams.get("q") || undefined;
 
-    // If fetching more emails for any folder via pageToken, or if it's not INBOX
-    if (pageToken || folder !== "INBOX") {
+    // If fetching more emails for any folder via pageToken, if it's not INBOX, or if we have a search query
+    if (pageToken || folder !== "INBOX" || q) {
       const gmailApi = corsair.withTenant(userId).gmail.api;
       
       const response = await gmailApi.messages.list({
         userId: "me",
         maxResults: 15,
-        labelIds: [folder],
+        labelIds: q ? undefined : [folder],
+        ...(q ? { q: folder === "INBOX" ? `in:inbox ${q}` : `in:${folder} ${q}` } : {}),
         ...(pageToken ? { pageToken } : {})
       });
 

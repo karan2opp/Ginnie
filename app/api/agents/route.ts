@@ -183,15 +183,19 @@ This invite was sent via Ginnie.
     },
 });
 
-let agentInstance: any = null;
+let cachedBuiltTools: any = null;
+
+async function getBuiltTools() {
+    if (cachedBuiltTools) return cachedBuiltTools;
+    const provider = new OpenAIAgentsProvider();
+    cachedBuiltTools = await provider.build({ corsair, tool });
+    return cachedBuiltTools;
+}
 
 async function getAgent() {
-    if (agentInstance) return agentInstance;
+    const builtTools = await getBuiltTools();
 
-    const provider = new OpenAIAgentsProvider();
-    const builtTools = await provider.build({ corsair, tool });
-
-    agentInstance = new Agent({
+    return new Agent({
         name: 'ginnie',
         model: 'gpt-4o-mini',
         instructions: `
@@ -238,8 +242,6 @@ Always:
   `,
         tools: [...builtTools, createMeeting],
     });
-
-    return agentInstance;
 }
 
 export async function POST(req: Request) {
@@ -249,7 +251,7 @@ export async function POST(req: Request) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { message, threadId } = await req.json();
+    const { message, threadId, emailContext } = await req.json();
     if (!message) {
         return Response.json({ error: 'No message provided' }, { status: 400 });
     }
@@ -309,12 +311,40 @@ const res = await corsair.withTenant("${userId}").gmail.api.messages.send({
 return res;
 \`\`\`
 
+For Gmail reading and listing, use:
+- \`corsair.withTenant("${userId}").gmail.api.messages.list({ userId: "me", maxResults: 3, q: "your query" })\`
+- \`corsair.withTenant("${userId}").gmail.api.messages.get({ userId: "me", id: "MSG_ID", format: "metadata", metadataHeaders: ["Subject", "From", "Date"] })\`
+CRITICAL: You MUST use format: "metadata" as shown above. This returns the headers and a short 'snippet' of the body, which is perfectly sufficient for summaries. NEVER use format: "full" or "raw" because real email bodies contain huge base64 attachments that will immediately crash your context window.
+
+To REPLY to an email, you must include the In-Reply-To and References headers, and pass the threadId:
+\`\`\`javascript
+const rawEmail = \`To: TARGET_EMAIL\\r\\nFrom: ${user?.email}\\r\\nSubject: Re: ORIGINAL_SUBJECT\\r\\nIn-Reply-To: ORIGINAL_MESSAGE_ID\\r\\nReferences: ORIGINAL_MESSAGE_ID\\r\\n\\r\\nYOUR_BODY\`;
+const encodedEmail = Buffer.from(rawEmail).toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');
+const res = await corsair.withTenant("${userId}").gmail.api.messages.send({
+  userId: "me",
+  requestBody: {
+    raw: encodedEmail,
+    threadId: "ORIGINAL_THREAD_ID"
+  }
+});
+return res;
+\`\`\`
+
 For Google Calendar, use the following methods on \`corsair.withTenant("${userId}").googlecalendar.api\`:
 - \`events.getMany({ calendarId: 'primary', timeMin: "...", timeMax: "...", singleEvents: true })\`
 - \`events.create({ calendarId: 'primary', conferenceDataVersion: 1, sendUpdates: "all", event: { summary: "...", attendees: [{ email: "target@example.com" }], start: { dateTime: "..." }, end: { dateTime: "..." }, conferenceData: { createRequest: { requestId: "some_unique_string" } } } })\`
 - \`events.update({ calendarId: 'primary', id: "EVENT_ID", event: { summary: "...", start: { ... }, end: { ... } } })\`
 - \`events.delete({ calendarId: 'primary', id: "EVENT_ID" })\`
 Note: Do NOT use \`requestBody\`. Put event data inside the \`event\` property.
+
+${emailContext ? `[Current Context]
+The user is currently viewing the following email in the UI:
+- Message ID: ${emailContext.id}
+- From: ${emailContext.from}
+- Subject: ${emailContext.subject}
+
+When asked to reply to an email, use this context automatically. Do NOT ask for the recipient's email address. The target email is: ${emailContext.from.match(/<([^>]+)>/)?.[1] || emailContext.from}. Use the Message ID ${emailContext.id} for the In-Reply-To and References headers.
+` : ''}
 [User Request]
 ${message}`;
         const actualThreadId = threadId || crypto.randomUUID();
@@ -328,8 +358,24 @@ ${message}`;
             content: message,
         });
 
+        // Fetch past messages to provide conversational memory
+        const pastMsgs = await db.select()
+            .from(chatMessages)
+            .where(eq(chatMessages.threadId, actualThreadId))
+            .orderBy(chatMessages.createdAt);
+
+        // Keep last 3 messages for context and truncate long contents
+        const recentMsgs = pastMsgs.slice(-3);
+        const historyText = recentMsgs.map(m => {
+            const content = m.content || "";
+            const truncated = content.length > 1500 ? content.substring(0, 1500) + "...[truncated]" : content;
+            return `${m.role === 'user' ? 'User' : 'Assistant'}: ${truncated}`;
+        }).join("\n\n");
+
+        const finalPrompt = enhancedMessage.replace("[User Request]", "[Recent Conversation History]\n" + historyText + "\n\n[User Request]");
+
         const agent = await getAgent();
-        const result = await run(agent, enhancedMessage);
+        const result = await run(agent, finalPrompt);
 
         let finalOutput = result.finalOutput || 'No response';
 
