@@ -6,16 +6,16 @@ import { orders } from '@/db/schema/orders';
 import { users } from '@/db/schema/user';
 import { eq } from 'drizzle-orm';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
-
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
+  const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || 'dummy_key_to_pass_build',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || 'dummy_secret_to_pass_build',
+  });
 
   const { plan } = await req.json();
 
