@@ -12,7 +12,6 @@ export async function fetchDashboardStats(userId: string) {
     sentTotal: 0,
     draftsTotal: 0,
     meetingsThisWeek: 0,
-    meetingsThisWeek: 0,
     totalUsage: 0,
     requestsToday: 0,
     dailyLimit: 30,
