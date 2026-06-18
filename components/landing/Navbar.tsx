@@ -17,12 +17,28 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+      // Get the nav height for offset
+      const navHeight = 100;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - navHeight;
+  
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
+    }
+  };
+
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-300 ${isScrolled ? "pt-4" : "pt-0"}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 flex justify-center transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${isScrolled ? "pt-6" : "pt-0"}`}>
       <nav
-        className={`flex items-center justify-between transition-all duration-500 ease-out ${
+        className={`flex items-center justify-between transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isScrolled
-            ? "w-[95%] md:w-[85%] max-w-5xl bg-[#0a0a0a]/80 backdrop-blur-md py-3 px-6 rounded-full border border-zinc-800/80 shadow-2xl shadow-black/50"
+            ? "w-[90%] md:w-[65%] max-w-4xl bg-[#0a0a0a]/90 backdrop-blur-xl py-3.5 px-8 rounded-full border border-zinc-800/80 shadow-2xl shadow-black"
             : "w-full max-w-7xl bg-transparent py-6 px-8 rounded-none border border-transparent"
         }`}
       >
@@ -31,10 +47,9 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-300">
-          <Link href="#" className="hover:text-white transition-colors">Product</Link>
-          <Link href="#" className="hover:text-white transition-colors">Features</Link>
-          <Link href="#" className="hover:text-white transition-colors">Pricing</Link>
-          <Link href="#" className="hover:text-white transition-colors">Docs</Link>
+          <a href="#unified-ai" onClick={(e) => handleSmoothScroll(e, 'unified-ai')} className="hover:text-white transition-colors cursor-pointer">Unified AI</a>
+          <a href="#automations" onClick={(e) => handleSmoothScroll(e, 'automations')} className="hover:text-white transition-colors cursor-pointer">Automations</a>
+          <a href="#pricing" onClick={(e) => handleSmoothScroll(e, 'pricing')} className="hover:text-white transition-colors cursor-pointer">Pricing</a>
         </div>
 
         <div className="flex items-center gap-6">
