@@ -73,7 +73,7 @@ export async function createCalendarEvent(userId: string, data: { title: string,
 
     const eventParams: any = {
       calendarId: "primary",
-      requestBody: {
+      event: {
         summary: data.title,
         description: data.description || "",
         start: { dateTime: data.start.toISOString() },
@@ -83,7 +83,7 @@ export async function createCalendarEvent(userId: string, data: { title: string,
 
     if (data.addMeet) {
       eventParams.conferenceDataVersion = 1;
-      eventParams.requestBody.conferenceData = {
+      eventParams.event.conferenceData = {
         createRequest: {
           requestId: Math.random().toString(36).substring(7),
           conferenceSolutionKey: { type: "hangoutsMeet" }
@@ -92,7 +92,7 @@ export async function createCalendarEvent(userId: string, data: { title: string,
     }
 
     const response = await calendarApi.events.create(eventParams);
-    return { success: true, event: response.data };
+    return { success: true, event: response };
   } catch (error) {
     console.error("Error creating calendar event:", error);
     throw error;
