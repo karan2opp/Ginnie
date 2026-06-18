@@ -21,7 +21,6 @@
     "@corsair-dev/mcp": "^0.1.22",
     "@openai/agents": "^0.11.6",
     "@tailwindcss/typography": "^0.5.0-alpha.3",
-    "agentation": "^3.0.2",
     "corsair": "^0.1.76",
     "drizzle-orm": "^0.45.2",
     "framer-motion": "^12.40.0",
