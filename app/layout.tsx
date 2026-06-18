@@ -7,7 +7,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "My App",
+  title: "GinnieAi",
+  description: "Less busywork. More impact.",
 };
 
 export default function RootLayout({
