@@ -6,11 +6,14 @@ import { auth } from '@clerk/nextjs/server';
 import { db } from '../../../db';
 import { chatMessages } from '../../../db/schema/chat';
 import crypto from 'crypto';
-
-// Build agent outside handler so it's reused
-const provider = new OpenAIAgentsProvider();
-const builtTools = await provider.build({ corsair, tool });
 import { z } from 'zod';
+
+import { users } from '../../../db/schema/user';
+import { calendarEvents } from '../../../db/schema/calendar';
+import { eq, and, gte, count } from 'drizzle-orm';
+
+export const maxDuration = 60; // Allow longer execution time for agent
+
 
 const createMeeting = tool({
     name: 'create_meeting_native',
@@ -180,10 +183,18 @@ This invite was sent via Ginnie.
     },
 });
 
-const agent = new Agent({
-    name: 'ginnie',
-    model: 'gpt-4o-mini',
-    instructions: `
+let agentInstance: any = null;
+
+async function getAgent() {
+    if (agentInstance) return agentInstance;
+
+    const provider = new OpenAIAgentsProvider();
+    const builtTools = await provider.build({ corsair, tool });
+
+    agentInstance = new Agent({
+        name: 'ginnie',
+        model: 'gpt-4o-mini',
+        instructions: `
 You are Ginnie, a smart email and calendar assistant.
 
 You have access to the user's Gmail and Google Calendar via Corsair tools.
@@ -225,8 +236,11 @@ Always:
 }
 \`\`\`
   `,
-    tools: [...builtTools, createMeeting],
-});
+        tools: [...builtTools, createMeeting],
+    });
+
+    return agentInstance;
+}
 
 export async function POST(req: Request) {
     // protect route
@@ -241,8 +255,6 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { users } = await import('../../../db/schema/user');
-        const { eq, and, gte, count } = await import('drizzle-orm');
         const user = await db.select().from(users).where(eq(users.id, userId)).limit(1).then(res => res[0]);
 
         // Rate Limiting Logic
@@ -316,6 +328,7 @@ ${message}`;
             content: message,
         });
 
+        const agent = await getAgent();
         const result = await run(agent, enhancedMessage);
 
         let finalOutput = result.finalOutput || 'No response';
@@ -327,7 +340,6 @@ ${message}`;
                 const parsed = JSON.parse(jsonMatch[1]);
                 if (parsed.__EVENT_CREATED__) {
                     const eventData = parsed.__EVENT_CREATED__;
-                    const { calendarEvents } = await import('../../../db/schema/calendar');
                     await db.insert(calendarEvents).values({
                         id: crypto.randomUUID(),
                         userId: userId,
@@ -356,8 +368,8 @@ ${message}`;
         });
 
         return Response.json({ reply: finalOutput, threadId: actualThreadId });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Agent error:', error);
-        return Response.json({ error: 'Agent failed' }, { status: 500 });
+        return Response.json({ error: error.message || 'Agent failed', stack: error.stack }, { status: 500 });
     }
 }
