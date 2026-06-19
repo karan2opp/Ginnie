@@ -43,6 +43,7 @@ export function Navbar() {
         }`}
       >
         <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Ginnie Logo" className="w-12 h-12 rounded-2xl bg-[#10b981]/10 p-1.5 object-contain" />
           <span className="font-extrabold text-2xl text-white tracking-tight">Ginne AI</span>
         </div>
 

@@ -19,9 +19,7 @@ export function Sidebar({ currentPath, navLinks, children }: SidebarProps) {
       <div className={`flex items-center ${isOpen ? 'justify-between' : 'justify-center'} mb-10`}>
         {isOpen && (
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="shrink-0 h-8 w-8 rounded-lg bg-[#10b981] flex items-center justify-center text-black font-bold shadow-sm">
-              G
-            </div>
+            <img src="/logo.png" alt="Ginnie Logo" className="shrink-0 h-12 w-12 rounded-2xl bg-[#10b981]/10 p-1.5 object-contain" />
             <span className="font-bold text-lg tracking-tight text-white whitespace-nowrap">Ginnie</span>
           </div>
         )}
@@ -52,9 +50,7 @@ export function Sidebar({ currentPath, navLinks, children }: SidebarProps) {
               className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all ${isActive ? 'bg-[#1a1a1a] text-[#10b981]' : 'text-neutral-400 hover:bg-[#1a1a1a] hover:text-neutral-200'} ${!isOpen ? 'justify-center' : ''}`}
             >
               {link.icon === "G_LOGO" ? (
-                <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 font-bold text-[12px] transition-colors ${isActive ? 'bg-[#10b981] text-black shadow-sm' : 'bg-neutral-800 text-neutral-400 group-hover:bg-[#10b981] group-hover:text-black'}`}>
-                  G
-                </div>
+                <img src="/logo.png" alt="Chat" className={`w-6 h-6 rounded-md object-contain shrink-0 transition-all ${isActive ? 'bg-[#10b981]/20 p-0.5 shadow-sm' : 'opacity-70 group-hover:opacity-100'}`} />
               ) : (
                 <svg className={`w-5 h-5 shrink-0 transition-colors ${isActive ? 'text-[#10b981]' : 'text-neutral-500 group-hover:text-neutral-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={link.icon} />

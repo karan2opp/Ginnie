@@ -74,9 +74,7 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
           {/* Header */}
           <div className="h-12 bg-[#141414] border-b border-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#10b981] flex items-center justify-center shrink-0">
-                <span className="text-black font-bold text-xs">G</span>
-              </div>
+              <img src="/logo.png" alt="Ginnie Logo" className="w-10 h-10 rounded-full bg-[#10b981]/10 p-1 object-contain shrink-0" />
               <h3 className="font-semibold text-sm text-white">Ginnie</h3>
             </div>
             <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-white transition-colors">

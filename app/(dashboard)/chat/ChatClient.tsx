@@ -304,9 +304,7 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
           <div className="p-4 w-full max-w-3xl mx-auto">
             <div className="w-full relative flex items-center bg-[#111111] border border-neutral-800/60 rounded-[20px] p-2 shadow-2xl transition-colors">
               <div className="pl-3 pr-2 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-lg bg-[#10b981] flex items-center justify-center text-black font-bold shadow-sm shrink-0">
-                  G
-                </div>
+                <img src="/logo.png" alt="Ginnie Logo" className="w-10 h-10 rounded-full bg-[#10b981]/10 p-1 object-contain shrink-0" />
               </div>
 
               <textarea
