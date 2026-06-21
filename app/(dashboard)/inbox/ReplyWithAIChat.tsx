@@ -16,11 +16,16 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
   const [loading, setLoading] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom
+  // Auto scroll to bottom without scrolling the whole page
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
   }, [messages, isOpen]);
 
   async function sendMessage() {
@@ -85,7 +90,7 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
           </div>
 
           {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#0a0a0a]">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#0a0a0a]">
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <div className="w-10 h-10 bg-[#10b981]/10 rounded-full flex items-center justify-center mb-3">
@@ -133,7 +138,6 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Area */}

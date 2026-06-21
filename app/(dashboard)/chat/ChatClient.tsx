@@ -21,7 +21,7 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
   const [threads, setThreads] = useState<{threadId: string, title: string}[]>([]);
   const [currentThreadId, setCurrentThreadId] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch threads on mount
   useEffect(() => {
@@ -55,9 +55,14 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
       .catch(console.error);
   }, [currentThreadId]);
 
-  // Auto scroll to bottom
+  // Auto scroll to bottom without scrolling whole page
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
   }, [messages]);
 
   async function sendMessage() {
@@ -210,7 +215,7 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
             </div>
           ) : (
             // Messages area
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 mt-10">
+            <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6 mt-10">
               {messages.map((msg, i) => (
                 <div
                   key={i}
@@ -295,8 +300,6 @@ export function ChatClient({ userName = "" }: ChatClientProps) {
                   </div>
                 </div>
               )}
-
-              <div ref={messagesEndRef} />
             </div>
           )}
 

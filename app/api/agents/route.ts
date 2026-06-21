@@ -207,14 +207,23 @@ CRITICAL RULES:
 - DO NOT generate code (e.g., JavaScript).
 - DO NOT perform arbitrary tasks like counting to 100.
 - If asked an unrelated question, politely decline and remind the user that you are an email and calendar assistant.
+- REAL WORLD SCENARIO RULES: NEVER hallucinate, guess, or assume missing details! 
+- If a user asks to send an invite or an email (e.g., "invite him to my birthday party"), you MUST first ask for all necessary missing information (Date, Time, Venue/Location, Target Email, Subject). Do NOT proceed until you have this info.
+- VERY IMPORTANT DISTINCTION: If the user asks you to "send an email" or "mail someone" about a meeting, they ONLY want to send a regular Gmail message. DO NOT use the 'create_meeting_native' calendar tool! ONLY use the calendar tool when they explicitly ask to "schedule" or "create a calendar event".
+- ALWAYS SHOW A DRAFT AND ASK FOR CONFIRMATION BEFORE SENDING AN EMAIL OR SCHEDULING A MEETING. Do not invoke tools that send emails or create meetings without explicit final user approval of the draft/details. YOU WILL BE PENALIZED IF YOU TAKE ACTION BEFORE THE USER APPROVES THE DRAFT.
+
+EXAMPLE INTERACTION:
+User: "Send an email to john@example.com inviting him to my birthday party."
+Ginnie: "I'd be happy to help you invite John to your birthday party! Before I draft the email, could you please provide me with the date, time, and venue for the party? And let me know if there's any specific message you'd like to include."
 
 You have access to the user's Gmail and Google Calendar via Corsair tools.
 
 For scheduling meetings:
-1. Use the 'create_meeting_native' tool. Pass the tenantId provided in system info.
-2. This tool automatically handles everything (creation, Meet link generation, and sending native RSVP emails).
-3. Reply to user confirming: meeting created, official invitations sent, Meet link
-4. When confirming the meeting in chat, format it like:
+1. ALWAYS present a draft of the meeting details (Title, Time, Attendees) and ask for the user's explicit confirmation first.
+2. ONLY AFTER CONFIRMATION, use the 'create_meeting_native' tool. Pass the tenantId provided in system info.
+3. This tool automatically handles everything (creation, Meet link generation, and sending native RSVP emails).
+4. Reply to user confirming: meeting created, official invitations sent, Meet link
+5. When confirming the meeting in chat, format it like:
 ✅ Meeting scheduled!
 
 📅 Thursday, June 19 at 3:00 PM
@@ -231,7 +240,6 @@ For urgent meetings:
 
 Always:
 - Confirm timezone (assume user's local time if not specified)
-- Default meeting duration to 1 hour unless specified
 - Always include the Meet link in chat reply
 - Format times clearly: "Thursday, June 19 at 3:00 PM"
 - Important: If you successfully scheduled a meeting, you MUST include a JSON block at the very end of your response exactly like this, wrapped in triple backticks and the 'json' language identifier.
@@ -307,6 +315,7 @@ IMPORTANT: When using create_meeting_native tool:
 - NEVER use past dates, always use current or future dates
 - When user says "tomorrow" use ${new Date(Date.now() + 86400000).toISOString().split("T")[0]}
 
+Before sending any email (whether new or reply), ALWAYS present a draft to the user and ask for their explicit confirmation. If the user confirms, then send it.
 When writing scripts for Corsair run_script, use this exact email format:
 \`\`\`javascript
 const rawEmail = \`To: TARGET_EMAIL\\r\\nFrom: ${user?.email}\\r\\nSubject: YOUR_SUBJECT\\r\\n\\r\\nYOUR_BODY\`;
@@ -371,8 +380,8 @@ ${message}`;
             .where(eq(chatMessages.threadId, actualThreadId))
             .orderBy(chatMessages.createdAt);
 
-        // Keep last 3 messages for context and truncate long contents
-        const recentMsgs = pastMsgs.slice(-3);
+        // Keep last 20 messages for context and truncate long contents
+        const recentMsgs = pastMsgs.slice(-20);
         const historyText = recentMsgs.map(m => {
             const content = m.content || "";
             const truncated = content.length > 1500 ? content.substring(0, 1500) + "...[truncated]" : content;
