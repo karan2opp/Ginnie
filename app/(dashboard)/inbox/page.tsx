@@ -83,71 +83,53 @@ export default async function InboxPage({ searchParams }: any) {
                 <div className="flex-1 flex flex-col w-full h-full bg-[#0a0a0a]">
                   {selectedEmail ? (
                     <>
-                      {/* Unified Compact Header */}
-                      <div className="h-16 px-4 border-b border-neutral-800/60 shrink-0 bg-neutral-950 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 min-w-0">
-                          {/* Back Button */}
-                          <Link 
-                            href={`/inbox?folder=${folder}`} 
-                            className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-full transition-colors shrink-0"
-                            title="Back to Inbox"
-                          >
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                          </Link>
-                          
-                          {/* Sender Avatar */}
-                          <div className="w-9 h-9 shrink-0 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-sm text-sm">
-                            {selectedEmail.from.charAt(0).toUpperCase()}
-                          </div>
-                          
-                          {/* Subject & Sender Text */}
-                          <div className="flex flex-col min-w-0 justify-center">
-                            <h2 className="text-sm font-semibold text-white truncate leading-tight">{selectedEmail.subject}</h2>
-                            <div className="flex items-center gap-2 text-xs text-neutral-400 leading-tight">
-                              <span className="truncate">{selectedEmail.from}</span>
-                              <span className="hidden sm:inline">&bull;</span>
-                              <span className="hidden sm:inline">to me</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Actions & Date */}
-                        <div className="flex items-center gap-4 shrink-0">
-                          <span className="text-xs text-neutral-500 hidden md:block">{selectedEmail.date}</span>
-                          <div className="flex items-center gap-1 border-l border-neutral-800/60 pl-4">
-                            <ReplyWithAIChat emailContext={selectedEmail} />
-                            <button className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-full transition-colors" title="Reply">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                              </svg>
-                            </button>
-                            <button className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-full transition-colors" title="Archive">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                              </svg>
-                            </button>
-                            <button className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-full transition-colors" title="Delete">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
+                      {/* Big Subject Header & Back Button */}
+                      <div className="px-10 pt-10 pb-6 shrink-0 flex items-start gap-4">
+                        <Link 
+                          href={`/inbox?folder=${folder}`} 
+                          className="mt-1 p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-full transition-colors shrink-0"
+                          title="Back to Inbox"
+                        >
+                          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                          </svg>
+                        </Link>
+                        <h1 className="text-3xl font-bold text-white leading-tight">{selectedEmail.subject}</h1>
                       </div>
 
-                      <div className="flex-1 overflow-hidden px-10 pb-10 bg-neutral-950">
-                        {/* 
-                          Using an iframe prevents the email's inline styles from breaking the dark theme,
-                          and provides a white canvas for standard HTML emails to look correct.
-                        */}
-                        <div className="w-full h-full bg-[#111111] rounded-xl shadow-2xl overflow-hidden border border-neutral-800/60">
+                      {/* Main Scrollable Area - Changed to flex column to fill screen */}
+                      <div className="flex-1 flex flex-col overflow-hidden px-10 pb-10 min-h-0">
+                        {/* Sender Info Row */}
+                        <div className="flex items-center justify-between mb-6 shrink-0">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 shrink-0 rounded-full bg-neutral-800 flex items-center justify-center text-white font-bold text-lg">
+                              {selectedEmail.from.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex flex-col">
+                              <div className="flex items-baseline gap-2">
+                                <span className="font-bold text-white text-base">{selectedEmail.from.split('<')[0]?.trim() || selectedEmail.from}</span>
+                                {selectedEmail.from.includes('<') && (
+                                  <span className="text-sm text-neutral-500">&lt;{selectedEmail.from.split('<')[1]}</span>
+                                )}
+                              </div>
+                              <span className="text-xs text-neutral-500">To: you</span>
+                            </div>
+                          </div>
+                          <span className="text-sm text-neutral-500">{selectedEmail.date}</span>
+                        </div>
+
+                        {/* Email Body Iframe in White Card */}
+                        <div className="w-full flex-1 bg-white text-black rounded-xl shadow-lg overflow-hidden border border-neutral-200 mb-6 flex flex-col min-h-0">
                           <iframe 
-                            srcDoc={`<style>*, body { color: #ffffff !important; background-color: #111111 !important; color-scheme: dark; } a, a * { color: #60a5fa !important; }</style>` + selectedEmail.bodyHtml}
-                            className="w-full h-full"
+                            srcDoc={`<style>body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 2.5rem; line-height: 1.6; font-size: 15px; margin: 0; color: #000; background-color: #fff; word-wrap: break-word; } *, body { color: #000 !important; background-color: transparent !important; color-scheme: light; } a, a * { color: #2563eb !important; text-decoration: none; } a:hover { text-decoration: underline; } blockquote { border-left: 3px solid #ccc; padding-left: 1rem; margin-left: 0; color: #666 !important; }</style>` + selectedEmail.bodyHtml}
+                            className="w-full flex-1"
                             sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                           />
+                        </div>
+
+                        {/* Bottom Actions Row */}
+                        <div className="flex items-center gap-3 shrink-0 relative z-50">
+                          <ReplyWithAIChat emailContext={selectedEmail} />
                         </div>
                       </div>
                     </>

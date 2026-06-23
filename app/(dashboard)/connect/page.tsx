@@ -68,36 +68,16 @@ export default async function ConnectPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-[#050505] relative overflow-hidden">
+      {/* Background glow effects */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#22c55e]/10 rounded-full blur-[100px] opacity-50 pointer-events-none"></div>
+      
+      <div className="w-full max-w-md rounded-2xl bg-[#0a0a0a] border border-zinc-800/80 p-8 shadow-black shadow-2xl relative z-10">
 
-        <h1 className="text-2xl font-bold text-gray-900">
-          Connect your Google account
-        </h1>
-        <p className="mt-2 text-gray-500">
-          We need access to your Gmail and Calendar to get started.
-        </p>
-
-        <div className="mt-6 space-y-3">
-          {/* What we access */}
-          <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
-            <p className="text-sm font-medium text-gray-700">
-              We will access:
-            </p>
-            <ul className="mt-2 space-y-1 text-sm text-gray-500">
-              <li>✅ Read and send Gmail emails</li>
-              <li>✅ View and create Calendar events</li>
-              <li>✅ Send calendar invites</li>
-            </ul>
-          </div>
-
-          {/* Connect button */}
-          <a
-            href="/google"
-            className="flex w-full items-center justify-center gap-3 rounded-lg bg-blue-600 px-4 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
-          >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
-              <path
+        <div className="flex justify-center mb-6">
+          <div className="w-12 h-12 rounded-full bg-[#22c55e]/10 flex items-center justify-center border border-[#22c55e]/20 shadow-[0_0_15px_rgba(34,197,94,0.15)]">
+            <svg className="h-6 w-6 text-[#22c55e]" viewBox="0 0 24 24">
+               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               />
@@ -114,10 +94,62 @@ export default async function ConnectPage() {
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
+          </div>
+        </div>
+
+        <h1 className="text-2xl font-bold text-white text-center tracking-tight">
+          Connect your Google account
+        </h1>
+        <p className="mt-2 text-zinc-400 text-center text-sm leading-relaxed">
+          We need access to your Gmail and Calendar to get started.
+        </p>
+
+        <div className="mt-8 space-y-4">
+          {/* What we access */}
+          <div className="rounded-xl border border-zinc-800/80 bg-neutral-900/30 p-5">
+            <p className="text-sm font-semibold text-white mb-3">
+              We will access:
+            </p>
+            <ul className="space-y-2.5 text-sm text-zinc-400">
+              <li className="flex items-start gap-2.5">
+                <div className="mt-0.5 rounded-full bg-[#22c55e]/20 p-0.5">
+                  <svg className="w-3 h-3 text-[#22c55e]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Read and send Gmail emails</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <div className="mt-0.5 rounded-full bg-[#22c55e]/20 p-0.5">
+                  <svg className="w-3 h-3 text-[#22c55e]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>View and create Calendar events</span>
+              </li>
+              <li className="flex items-start gap-2.5">
+                <div className="mt-0.5 rounded-full bg-[#22c55e]/20 p-0.5">
+                  <svg className="w-3 h-3 text-[#22c55e]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <span>Send calendar invites</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Connect button */}
+          <a
+            href="/google"
+            className="group flex w-full items-center justify-center gap-3 rounded-lg bg-[#22c55e] px-4 py-3.5 text-black font-semibold hover:bg-[#16a34a] transition-all duration-200 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] transform hover:-translate-y-0.5"
+          >
             Connect Google Account
+            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
           </a>
 
-          <p className="text-center text-xs text-gray-400">
+          <p className="text-center text-xs text-zinc-500 mt-4">
             You can disconnect anytime from settings
           </p>
         </div>

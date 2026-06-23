@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { motion, useDragControls } from "framer-motion";
 
 interface Message {
   role: "user" | "agent";
@@ -17,6 +18,7 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
   const [threadId, setThreadId] = useState<string | null>(null);
   
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const dragControls = useDragControls();
 
   // Auto scroll to bottom without scrolling the whole page
   useEffect(() => {
@@ -64,9 +66,9 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
       {!isOpen && (
         <button 
           onClick={() => setIsOpen(true)}
-          className="bg-[#10b981]/10 text-[#10b981] hover:bg-[#10b981]/20 px-3 py-1.5 text-xs rounded-lg font-bold transition-colors shadow-sm flex items-center gap-1.5 mr-2"
+          className="flex items-center gap-2 px-4 py-2 bg-[#10b981]/10 hover:bg-[#10b981]/20 border border-[#10b981]/20 text-[#10b981] text-sm font-medium rounded-full transition-colors shadow-sm ml-auto"
         >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
           Reply with AI
@@ -75,14 +77,23 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="absolute top-10 right-0 bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl shadow-2xl w-80 sm:w-96 h-[400px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
+        <motion.div 
+          drag
+          dragControls={dragControls}
+          dragListener={false}
+          dragMomentum={false}
+          className="absolute bottom-14 left-0 bg-[#0a0a0a] border border-[#1a1a1a] rounded-2xl shadow-2xl w-80 sm:w-96 h-[400px] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 origin-bottom-left"
+        >
           {/* Header */}
-          <div className="h-12 bg-[#141414] border-b border-[#1a1a1a] flex items-center justify-between px-4 shrink-0">
+          <div 
+            onPointerDown={(e) => dragControls.start(e)}
+            className="h-12 bg-[#141414] border-b border-[#1a1a1a] flex items-center justify-between px-4 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          >
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Ginnie Logo" className="w-10 h-10 rounded-full bg-[#10b981]/10 p-1 object-contain shrink-0" />
-              <h3 className="font-semibold text-sm text-white">Ginnie</h3>
+              <img src="/logo.png" alt="Ginnie Logo" className="w-10 h-10 rounded-full bg-[#10b981]/10 p-1 object-contain shrink-0 pointer-events-none" />
+              <h3 className="font-semibold text-sm text-white pointer-events-none">Ginnie</h3>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-white transition-colors">
+            <button onClick={() => setIsOpen(false)} className="text-neutral-500 hover:text-white transition-colors p-1" title="Close">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -173,7 +184,7 @@ export function ReplyWithAIChat({ emailContext }: { emailContext?: any }) {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </div>
   );

@@ -55,9 +55,9 @@ export async function fetchInboxData(userId: string, folder: string, messageId?:
           });
 
           const headers = detail.payload?.headers;
-          const subject = headers?.find((h: any) => h.name === "Subject")?.value || "No Subject";
-          const from = headers?.find((h: any) => h.name === "From")?.value || "Unknown Sender";
-          const date = headers?.find((h: any) => h.name === "Date")?.value || "";
+          const subject = headers?.find((h: any) => h.name?.toLowerCase() === "subject")?.value || "No Subject";
+          const from = headers?.find((h: any) => h.name?.toLowerCase() === "from")?.value || "Unknown Sender";
+          const date = headers?.find((h: any) => h.name?.toLowerCase() === "date")?.value || "";
 
           return {
             id: msg.id!,
@@ -81,9 +81,9 @@ export async function fetchInboxData(userId: string, folder: string, messageId?:
       });
 
       const headers = detail.payload?.headers;
-      const subject = headers?.find((h: any) => h.name === "Subject")?.value || "No Subject";
-      const from = headers?.find((h: any) => h.name === "From")?.value || "Unknown Sender";
-      const date = headers?.find((h: any) => h.name === "Date")?.value || "";
+      const subject = headers?.find((h: any) => h.name?.toLowerCase() === "subject")?.value || "No Subject";
+      const from = headers?.find((h: any) => h.name?.toLowerCase() === "from")?.value || "Unknown Sender";
+      const date = headers?.find((h: any) => h.name?.toLowerCase() === "date")?.value || "";
       const bodyHtml = extractBody(detail.payload);
 
       selectedEmail = {

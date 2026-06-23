@@ -150,24 +150,7 @@ export function EmailListClient({ folder, initialEmails = [], initialNextPageTok
                   </div>
                 </Link>
 
-                {/* Quick Actions (Hover) */}
-                <div className="absolute right-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-[#1a1a1a] p-1 rounded-lg shadow-lg">
-                  <button onClick={(e) => updatePriority(email.id, "urgent", e)} className="p-2 hover:bg-[#2a2a2a] rounded-md text-neutral-400 hover:text-red-400 transition-colors" title="Mark as Urgent">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </button>
-                  <button onClick={(e) => updatePriority(email.id, "primary", e)} className="p-2 hover:bg-[#2a2a2a] rounded-md text-neutral-400 hover:text-[#10b981] transition-colors" title="Mark as Primary">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </button>
-                  <button onClick={(e) => updatePriority(email.id, "normal", e)} className="p-2 hover:bg-[#2a2a2a] rounded-md text-neutral-400 hover:text-white transition-colors" title="Mark as Normal">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                    </svg>
-                  </button>
-                </div>
+
               </div>
             ))}
             

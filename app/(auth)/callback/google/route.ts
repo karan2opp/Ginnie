@@ -32,26 +32,20 @@ export async function GET(req: Request) {
     const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
     const { data } = await oauth2.userinfo.get();
 
-    // Ensure the user exists in our local DB before inserting the connection
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    });
-
-    if (!existingUser) {
-      await db.insert(users).values({
+    await db.insert(users).values({
+      id: userId,
+      email: data.email!,
+      name: data.name,
+      imageUrl: data.picture,
+    }).onConflictDoUpdate({
+      target: users.email,
+      set: {
         id: userId,
-        email: data.email!,
-        name: data.name,
-        imageUrl: data.picture,
-      });
-    } else {
-      await db.update(users).set({
-        email: data.email!,
         name: data.name,
         imageUrl: data.picture,
         updatedAt: new Date()
-      }).where(eq(users.id, userId));
-    }
+      }
+    });
 
     const existing = await db.query.connections.findFirst({
       where: eq(connections.userId, userId)

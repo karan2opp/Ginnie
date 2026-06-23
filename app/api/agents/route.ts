@@ -329,8 +329,8 @@ return res;
 
 For Gmail reading and listing, use:
 - \`corsair.withTenant("${userId}").gmail.api.messages.list({ userId: "me", maxResults: 3, q: "your query" })\`
-- \`corsair.withTenant("${userId}").gmail.api.messages.get({ userId: "me", id: "MSG_ID", format: "metadata", metadataHeaders: ["Subject", "From", "Date"] })\`
-CRITICAL: You MUST use format: "metadata" as shown above. This returns the headers and a short 'snippet' of the body, which is perfectly sufficient for summaries. NEVER use format: "full" or "raw" because real email bodies contain huge base64 attachments that will immediately crash your context window.
+- \`corsair.withTenant("${userId}").gmail.api.messages.get({ userId: "me", id: "MSG_ID", format: "metadata" })\`
+CRITICAL: You MUST use format: "metadata" as shown above. This returns ALL the headers and a short 'snippet' of the body. To find the sender, check the "From", "Sender", or "Return-Path" headers (handle any casing). To find the subject, check the "Subject" header. The 'snippet' field is HTML-entity encoded (e.g., it uses &#39; instead of apostrophes). You MUST decode these HTML entities into normal punctuation before showing them to the user. NEVER use format: "full" or "raw" because real email bodies contain huge base64 attachments that will immediately crash your context window.
 
 To REPLY to an email, you must include the In-Reply-To and References headers, and pass the threadId:
 \`\`\`javascript
